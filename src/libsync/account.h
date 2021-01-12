@@ -369,6 +369,8 @@ private slots:
     void onWebSocketConnected();
     void onWebSocketDisconnected();
     void onWebSocketTextMessageReceived(const QString &message);
+    void onWebSocketError(QAbstractSocket::SocketError error);
+    void onWebSocketSslErrors(const QList<QSslError> &errors);
 };
 }
 

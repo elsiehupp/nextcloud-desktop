@@ -680,8 +680,10 @@ void Account::connectWebSocket()
     // Disconnect signal handlers
     disconnect(_webSocket.data(), &AbstractWebSocket::connected, this, &Account::onWebSocketConnected);
     disconnect(_webSocket.data(), &AbstractWebSocket::connected, this, &Account::onWebSocketConnected);
+    disconnect(_webSocket.data(), &AbstractWebSocket::error, this, &Account::onWebSocketError);
 
     // Reconnect them
+    connect(_webSocket.data(), &AbstractWebSocket::error, this, &Account::onWebSocketError);
     connect(_webSocket.data(), &AbstractWebSocket::connected, this, &Account::onWebSocketConnected);
     connect(_webSocket.data(), &AbstractWebSocket::disconnected, this, &Account::onWebSocketDisconnected);
 
@@ -704,12 +706,13 @@ void Account::onWebSocketConnected()
 
 void Account::authenticateOnWebSocket()
 {
-    if (!isAuthenticatedOnWebSocket)
+    if (isAuthenticatedOnWebSocket)
         return;
 
     const auto username = _credentials->user();
     const auto password = _credentials->password();
-    // TODO: Error handling
+
+    // Authenticate
     _webSocket->sendTextMessage(username);
     _webSocket->sendTextMessage(password);
 }
@@ -718,15 +721,30 @@ void Account::onWebSocketDisconnected() { }
 
 void Account::onWebSocketTextMessageReceived(const QString &message)
 {
-    // TODO: Try reconnect on authentication failures
     if (message == "notify_file") {
         emit filesChanged(this);
     } else if (message == "authenticated") {
         isAuthenticatedOnWebSocket = true;
     } else if (message == "err: Invalid credentials") {
         isAuthenticatedOnWebSocket = false;
-        // TODO: How to handle this?
+        connectWebSocket();
     }
+}
+
+void Account::onWebSocketError(QAbstractSocket::SocketError error)
+{
+    switch (error) {
+        // TODO: Maybe few more cases go here?
+    case QAbstractSocket::NetworkError:
+        connectWebSocket();
+    default:;
+        // TODO: Log unhandled errors
+    }
+}
+
+void Account::onWebSocketSslErrors(const QList<QSslError> &errors)
+{
+    // TODO: What to do with them?
 }
 
 } // namespace OCC
