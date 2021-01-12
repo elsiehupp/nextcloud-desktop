@@ -35,7 +35,6 @@
 #include <memory>
 #include "capabilities.h"
 #include "clientsideencryption.h"
-#include "websocket.h"
 
 class QSettings;
 class QNetworkReply;
@@ -83,7 +82,7 @@ class OWNCLOUDSYNC_EXPORT Account : public QObject
     Q_PROPERTY(QUrl url MEMBER _url)
 
 public:
-    static AccountPtr create(QSharedPointer<AbstractWebSocket> webSocket = QSharedPointer<AbstractWebSocket>(new WebSocket));
+    static AccountPtr create();
     ~Account();
 
     AccountPtr sharedFromThis();
@@ -251,11 +250,6 @@ public:
     // Check for the directEditing capability
     void fetchDirectEditors(const QUrl &directEditingURL, const QString &directEditingETag);
 
-    bool supportsFilesPushNotifications() const
-    {
-        return isSupportingFilesPushNotifications;
-    }
-
 public slots:
     /// Used when forgetting credentials
     void clearQNAMCache();
@@ -293,7 +287,7 @@ protected Q_SLOTS:
     void slotDirectEditingRecieved(const QJsonDocument &json);
 
 private:
-    Account(QObject *parent = nullptr, QSharedPointer<AbstractWebSocket> webSocket = QSharedPointer<AbstractWebSocket>(new WebSocket));
+    Account(QObject *parent = nullptr);
     void setSharedThis(AccountPtr sharedThis);
 
     QWeakPointer<Account> _sharedThis;
@@ -339,11 +333,6 @@ private:
     // Direct Editing
     QString _lastDirectEditingETag;
 
-    QSharedPointer<AbstractWebSocket> _webSocket;
-
-    bool isSupportingFilesPushNotifications = false;
-    bool isAuthenticatedOnWebSocket = false;
-
     /* IMPORTANT - remove later - FIXME MS@2019-12-07 -->
      * TODO: For "Log out" & "Remove account": Remove client CA certs and KEY!
      *
@@ -360,17 +349,6 @@ public:
 private:
     bool _isRemoteWipeRequested_HACK = false;
     // <-- FIXME MS@2019-12-07
-
-    void connectWebSocket();
-    void disconnectWebSocket();
-    void authenticateOnWebSocket();
-
-private slots:
-    void onWebSocketConnected();
-    void onWebSocketDisconnected();
-    void onWebSocketTextMessageReceived(const QString &message);
-    void onWebSocketError(QAbstractSocket::SocketError error);
-    void onWebSocketSslErrors(const QList<QSslError> &errors);
 };
 }
 

@@ -22,6 +22,7 @@
 #include <QtWebSockets/QWebSocket>
 #include "connectionvalidator.h"
 #include "creds/abstractcredentials.h"
+#include "pushnotifications.h"
 #include <memory>
 
 class QSettings;
@@ -163,6 +164,8 @@ public:
     ///Asks for user credentials
     void handleInvalidCredentials();
 
+    QSharedPointer<PushNotifications> pushNotifications() const;
+
 public slots:
     /// Triggers a ping to the server to update state and
     /// connection status and errors.
@@ -201,6 +204,7 @@ private:
     QPointer<ConnectionValidator> _connectionValidator;
     QByteArray _notificationsEtagResponseHeader;
     QByteArray _navigationAppsEtagResponseHeader;
+    QSharedPointer<PushNotifications> _pushNotifications = nullptr;
 
     /**
      * Starts counting when the server starts being back up after 503 or

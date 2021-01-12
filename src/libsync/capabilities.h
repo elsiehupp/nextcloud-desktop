@@ -49,7 +49,7 @@ public:
     bool chunkingNg() const;
 
     // Whether push notifications for files are available
-    bool pushNotificationFilesWebSocketAvailable() const;
+    bool filesPushNotificationsAvailable() const;
 
     // Websocket url for push notifications if available
     // See pushNotificationFilesWebSocketAvailable()

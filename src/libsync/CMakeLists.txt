@@ -20,6 +20,7 @@ ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD|NetBSD|OpenBSD")
 set(libsync_SRCS
     account.cpp
     websocket.cpp
+    pushnotifications.cpp
     wordlist.cpp
     bandwidthmanager.cpp
     capabilities.cpp

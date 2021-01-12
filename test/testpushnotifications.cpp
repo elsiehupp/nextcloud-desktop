@@ -3,6 +3,7 @@
 
 #include "account.h"
 #include "common.h"
+#include "pushnotifications.h"
 #include "creds/abstractcredentials.h"
 
 using namespace std::chrono_literals;
@@ -58,10 +59,14 @@ private:
     QString _password;
 };
 
-QSharedPointer<OCC::Account> createAccount(WebSocketStub *webSocket)
+QSharedPointer<WebSocketStub> createWebSocket()
 {
-    QSharedPointer<WebSocketStub> ws(webSocket);
-    auto account = OCC::Account::create(ws);
+    return QSharedPointer<WebSocketStub>(new WebSocketStub);
+}
+
+QSharedPointer<OCC::Account> createAccount()
+{
+    auto account = OCC::Account::create();
 
     QStringList typeList;
     typeList.append("files");
@@ -83,20 +88,27 @@ QSharedPointer<OCC::Account> createAccount(WebSocketStub *webSocket)
     return account;
 }
 
-class TestAccount : public QObject
+QSharedPointer<OCC::PushNotifications> createPushNotifications(QSharedPointer<WebSocketStub> webSocket, OCC::Account *account)
+{
+    return QSharedPointer<OCC::PushNotifications>(new OCC::PushNotifications(account, webSocket));
+}
+
+class TestPushNotifications : public QObject
 {
     Q_OBJECT
 
 private slots:
-    void testSetCredentials_correctCredentials_AuthenticatedOnWebSocket()
+    void testReconnect_correctCredentials_AuthenticatedOnWebSocket()
     {
         const QString user = "user";
         const QString password = "password";
+        auto webSocket = createWebSocket();
+        auto account = createAccount();
         auto credentials = new CredentialsStub(user, password);
-        auto webSocket = new WebSocketStub();
-        auto account = createAccount(webSocket);
-
         account->setCredentials(credentials);
+        auto pushNotifications = createPushNotifications(webSocket, account.data());
+        pushNotifications->reconnect();
+
         wait(4ms);
 
         QCOMPARE(webSocket->sendTextMessageCalledCount, 2);
@@ -109,12 +121,14 @@ private slots:
         bool wasFilesChangedEmitted = false;
         const QString user = "user";
         const QString password = "password";
+        auto webSocket = createWebSocket();
+        auto account = createAccount();
         auto credentials = new CredentialsStub(user, password);
-        auto webSocket = new WebSocketStub();
-        auto account = createAccount(webSocket);
         account->setCredentials(credentials);
+        auto pushNotifications = createPushNotifications(webSocket, account.data());
+        pushNotifications->reconnect();
 
-        connect(account.data(), &OCC::Account::filesChanged, [&](OCC::Account *account) {
+        connect(pushNotifications.data(), &OCC::PushNotifications::filesChanged, [&](OCC::Account *account) {
             wasFilesChangedEmitted = true;
         });
 
@@ -128,10 +142,12 @@ private slots:
     {
         const QString user = "user";
         const QString password = "password";
+        auto webSocket = createWebSocket();
+        auto account = createAccount();
         auto credentials = new CredentialsStub(user, password);
-        auto webSocket = new WebSocketStub();
-        auto account = createAccount(webSocket);
         account->setCredentials(credentials);
+        auto pushNotifications = createPushNotifications(webSocket, account.data());
+        pushNotifications->reconnect();
 
         webSocket->sendTextMessageCalledCount = 0;
         webSocket->sendTextMessageCalledArguments.clear();
@@ -148,10 +164,12 @@ private slots:
     {
         const QString user = "user";
         const QString password = "password";
+        auto webSocket = createWebSocket();
+        auto account = createAccount();
         auto credentials = new CredentialsStub(user, password);
-        auto webSocket = new WebSocketStub();
-        auto account = createAccount(webSocket);
         account->setCredentials(credentials);
+        auto pushNotifications = createPushNotifications(webSocket, account.data());
+        pushNotifications->reconnect();
 
         webSocket->sendTextMessageCalledCount = 0;
         webSocket->sendTextMessageCalledArguments.clear();
@@ -165,5 +183,5 @@ private slots:
     }
 };
 
-QTEST_GUILESS_MAIN(TestAccount)
-#include "testaccount.moc"
+QTEST_GUILESS_MAIN(TestPushNotifications)
+#include "testpushnotifications.moc"

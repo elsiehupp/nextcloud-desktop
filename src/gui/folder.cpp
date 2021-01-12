@@ -677,7 +677,7 @@ bool Folder::supportsSelectiveSync() const
 
 bool Folder::supportsSyncNotificationsViaWebSocket() const
 {
-    return _accountState->account()->capabilities().pushNotificationFilesWebSocketAvailable();
+    return _accountState->account()->capabilities().filesPushNotificationsAvailable();
 }
 
 void Folder::saveToSettings() const
