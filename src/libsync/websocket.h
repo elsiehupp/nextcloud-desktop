@@ -37,6 +37,7 @@ public:
 private:
     QWebSocket _webSocket;
 
+    // To access _webSocket in tests
     friend class ::TestWebSocket;
 };
 }

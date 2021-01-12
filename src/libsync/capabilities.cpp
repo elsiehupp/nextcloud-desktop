@@ -176,7 +176,7 @@ bool Capabilities::chunkingNg() const
     return _capabilities["dav"].toMap()["chunking"].toByteArray() >= "1.0";
 }
 
-bool Capabilities::pushNotificationFilesWebSocketAvailable() const
+bool Capabilities::filesPushNotificationsAvailable() const
 {
     if (!_capabilities.contains("notify_push"))
         return false;

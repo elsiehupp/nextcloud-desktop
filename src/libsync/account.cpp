@@ -50,18 +50,17 @@ namespace OCC {
 Q_LOGGING_CATEGORY(lcAccount, "nextcloud.sync.account", QtInfoMsg)
 const char app_password[] = "_app-password";
 
-Account::Account(QObject *parent, QSharedPointer<AbstractWebSocket> webSocket)
+Account::Account(QObject *parent)
     : QObject(parent)
     , _capabilities(QVariantMap())
     , _davPath(Theme::instance()->webDavPath())
-    , _webSocket(webSocket)
 {
     qRegisterMetaType<AccountPtr>("AccountPtr");
 }
 
-AccountPtr Account::create(QSharedPointer<AbstractWebSocket> webSocket)
+AccountPtr Account::create()
 {
-    AccountPtr acc = AccountPtr(new Account(nullptr, webSocket));
+    AccountPtr acc = AccountPtr(new Account(nullptr));
     acc->setSharedThis(acc);
 
     //TODO: This probably needs to have a better
@@ -202,9 +201,6 @@ void Account::setCredentials(AbstractCredentials *cred)
         this, &Account::slotCredentialsFetched);
     connect(_credentials.data(), &AbstractCredentials::asked,
         this, &Account::slotCredentialsAsked);
-
-    // Connect or reconnect to websocket because credentials changed
-    connectWebSocket();
 }
 
 QUrl Account::davUrl() const
@@ -663,88 +659,6 @@ void Account::slotDirectEditingRecieved(const QJsonDocument &json)
             _capabilities.addDirectEditor(directEditor);
         }
     }
-}
-
-void Account::connectWebSocket()
-{
-    disconnectWebSocket();
-
-    // Check for web socket capability
-    if (!_capabilities.pushNotificationFilesWebSocketAvailable())
-        return;
-
-    isSupportingFilesPushNotifications = true;
-    isAuthenticatedOnWebSocket = false;
-    const auto &webSocketUrl = _capabilities.pushNotificationWebSocketUrl();
-
-    // Disconnect signal handlers
-    disconnect(_webSocket.data(), &AbstractWebSocket::connected, this, &Account::onWebSocketConnected);
-    disconnect(_webSocket.data(), &AbstractWebSocket::connected, this, &Account::onWebSocketConnected);
-    disconnect(_webSocket.data(), &AbstractWebSocket::error, this, &Account::onWebSocketError);
-
-    // Reconnect them
-    connect(_webSocket.data(), &AbstractWebSocket::error, this, &Account::onWebSocketError);
-    connect(_webSocket.data(), &AbstractWebSocket::connected, this, &Account::onWebSocketConnected);
-    connect(_webSocket.data(), &AbstractWebSocket::disconnected, this, &Account::onWebSocketDisconnected);
-
-    // Open websocket
-    _webSocket->open(QUrl(webSocketUrl));
-}
-
-void Account::disconnectWebSocket()
-{
-    _webSocket->close();
-}
-
-void Account::onWebSocketConnected()
-{
-    disconnect(_webSocket.data(), &AbstractWebSocket::textMessageReceived, this, &Account::onWebSocketTextMessageReceived);
-    connect(_webSocket.data(), &AbstractWebSocket::textMessageReceived, this, &Account::onWebSocketTextMessageReceived);
-
-    authenticateOnWebSocket();
-}
-
-void Account::authenticateOnWebSocket()
-{
-    if (isAuthenticatedOnWebSocket)
-        return;
-
-    const auto username = _credentials->user();
-    const auto password = _credentials->password();
-
-    // Authenticate
-    _webSocket->sendTextMessage(username);
-    _webSocket->sendTextMessage(password);
-}
-
-void Account::onWebSocketDisconnected() { }
-
-void Account::onWebSocketTextMessageReceived(const QString &message)
-{
-    if (message == "notify_file") {
-        emit filesChanged(this);
-    } else if (message == "authenticated") {
-        isAuthenticatedOnWebSocket = true;
-    } else if (message == "err: Invalid credentials") {
-        isAuthenticatedOnWebSocket = false;
-        connectWebSocket();
-    }
-}
-
-void Account::onWebSocketError(QAbstractSocket::SocketError error)
-{
-    switch (error) {
-        // TODO: Maybe few more cases go here?
-    case QAbstractSocket::NetworkError:
-        connectWebSocket();
-    default:;
-        // TODO: Log unhandled errors
-    }
-}
-
-void Account::onWebSocketSslErrors(const QList<QSslError> &errors)
-{
-    // TODO: What to do with them?
 }
 
 } // namespace OCC

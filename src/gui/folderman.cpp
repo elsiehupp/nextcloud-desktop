@@ -831,9 +831,9 @@ void FolderMan::slotEtagPollTimerTimeout()
     // Some folders need not to be checked because the use the new push notifications
     QList<Folder *> foldersToRun;
     for (auto folder : _folderMap) {
-        const auto account = folder->accountState()->account();
+        const auto pushNotifications = folder->accountState()->pushNotifications();
 
-        if (!account->supportsFilesPushNotifications())
+        if (!pushNotifications->filesPushNotificationsAvailable())
             foldersToRun.append(folder);
     }
 
@@ -1657,16 +1657,17 @@ void FolderMan::slotReconnectToPushNotificationsForFiles(const Folder::Map &fold
 {
     // Disconnect the signal handlers
     for (auto folder : folderMap) {
-        const auto account = folder->accountState()->account();
-        disconnect(account.data(), &Account::filesChanged, this, &FolderMan::slotProcessFilesPushNotification);
+        const auto pushNotifications = folder->accountState()->pushNotifications();
+
+        disconnect(pushNotifications.data(), &PushNotifications::filesChanged, this, &FolderMan::slotProcessFilesPushNotification);
     }
 
     // Reconnect them
     for (auto folder : folderMap) {
-        const auto account = folder->accountState()->account();
+        const auto pushNotifications = folder->accountState()->pushNotifications();
 
-        if (account->supportsFilesPushNotifications()) {
-            connect(account.data(), &Account::filesChanged, this, &FolderMan::slotProcessFilesPushNotification);
+        if (pushNotifications->filesPushNotificationsAvailable()) {
+            connect(pushNotifications.data(), &PushNotifications::filesChanged, this, &FolderMan::slotProcessFilesPushNotification);
         }
     }
 }

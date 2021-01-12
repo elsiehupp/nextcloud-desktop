@@ -20,7 +20,7 @@ private slots:
 
         const auto &capabilities = OCC::Capabilities(capabilitiesMap);
 
-        QCOMPARE(capabilities.pushNotificationFilesWebSocketAvailable(), true);
+        QCOMPARE(capabilities.filesPushNotificationsAvailable(), true);
     }
 
     void testPushNotificationWebSocketAvailable_pushNotificationsForFilesNotAvailable_returnFalse()
@@ -36,14 +36,14 @@ private slots:
 
         const auto &capabilities = OCC::Capabilities(capabilitiesMap);
 
-        QCOMPARE(capabilities.pushNotificationFilesWebSocketAvailable(), false);
+        QCOMPARE(capabilities.filesPushNotificationsAvailable(), false);
     }
 
     void testPushNotificationWebSocketAvailable_pushNotificationsNotAvailable_returnFalse()
     {
         const auto &capabilities = OCC::Capabilities(QVariantMap());
 
-        QCOMPARE(capabilities.pushNotificationFilesWebSocketAvailable(), false);
+        QCOMPARE(capabilities.filesPushNotificationsAvailable(), false);
     }
 
     void testPushNotificationWebSocketUrl_urlAvailable_returnUrl()
