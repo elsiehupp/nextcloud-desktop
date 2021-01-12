@@ -4,6 +4,8 @@ namespace OCC {
 
 WebSocket::WebSocket()
 {
+    connect(&_webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), this, &WebSocket::error);
+    connect(&_webSocket, &QWebSocket::sslErrors, this, &WebSocket::sslErrors);
     connect(&_webSocket, &QWebSocket::connected, this, &WebSocket::connected);
     connect(&_webSocket, &QWebSocket::disconnected, this, &WebSocket::disconnected);
     connect(&_webSocket, &QWebSocket::textMessageReceived, this, &WebSocket::textMessageReceived);

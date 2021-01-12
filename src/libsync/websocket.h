@@ -19,6 +19,8 @@ public:
 signals:
     void connected();
     void disconnected();
+    void error(QAbstractSocket::SocketError error);
+    void sslErrors(const QList<QSslError> &errors);
     void textMessageReceived(const QString &message);
 };
 
