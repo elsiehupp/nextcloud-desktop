@@ -12,7 +12,7 @@ class WebSocketStub : public OCC::AbstractWebSocket
 {
     Q_OBJECT
 public:
-    void open(const QUrl &url) override
+    void open(const QUrl & /*url*/) override
     {
         emit connected();
     }
@@ -49,7 +49,7 @@ public:
     virtual void fetchFromKeychain() { }
     virtual void askFromUser() { }
 
-    virtual bool stillValid(QNetworkReply *reply) { return false; }
+    virtual bool stillValid(QNetworkReply * /*reply*/) { return false; }
     virtual void persist() { }
     virtual void invalidateToken() { }
     virtual void forgetSensitiveData() { }
@@ -128,7 +128,7 @@ private slots:
         auto pushNotifications = createPushNotifications(webSocket, account.data());
         pushNotifications->reconnect();
 
-        connect(pushNotifications.data(), &OCC::PushNotifications::filesChanged, [&](OCC::Account *account) {
+        connect(pushNotifications.data(), &OCC::PushNotifications::filesChanged, [&](OCC::Account * /*account*/) {
             wasFilesChangedEmitted = true;
         });
 
