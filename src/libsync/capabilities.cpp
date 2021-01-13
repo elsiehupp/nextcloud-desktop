@@ -176,13 +176,18 @@ bool Capabilities::chunkingNg() const
     return _capabilities["dav"].toMap()["chunking"].toByteArray() >= "1.0";
 }
 
-bool Capabilities::filesPushNotificationsAvailable() const
+PushNotificationTypes Capabilities::pushNotificationsAvailable() const
 {
+    PushNotificationTypes pushNotificationTypes;
+
     if (!_capabilities.contains("notify_push"))
-        return false;
+        return pushNotificationTypes;
 
     const auto &types = _capabilities["notify_push"].toMap()["type"].toStringList();
-    return types.contains("files");
+    if (types.contains("files"))
+        pushNotificationTypes.setFlag(PushNotificationType::Files);
+
+    return pushNotificationTypes;
 }
 
 QString Capabilities::pushNotificationWebSocketUrl() const

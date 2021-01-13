@@ -7,7 +7,7 @@ class TestCapabilities : public QObject
     Q_OBJECT
 
 private slots:
-    void testPushNotificationWebSocketAvailable_pushNotificationsForFilesAvailable_returnTrue()
+    void testPushNotificationsAvailable_pushNotificationsForFilesAvailable_returnTrue()
     {
         QStringList typeList;
         typeList.append("files");
@@ -19,11 +19,12 @@ private slots:
         capabilitiesMap["notify_push"] = notifyPushMap;
 
         const auto &capabilities = OCC::Capabilities(capabilitiesMap);
+        const auto filesPushNotificationsAvailable = capabilities.pushNotificationsAvailable().testFlag(OCC::PushNotificationType::Files);
 
-        QCOMPARE(capabilities.filesPushNotificationsAvailable(), true);
+        QCOMPARE(filesPushNotificationsAvailable, true);
     }
 
-    void testPushNotificationWebSocketAvailable_pushNotificationsForFilesNotAvailable_returnFalse()
+    void testPushNotificationsAvailable_pushNotificationsForFilesNotAvailable_returnFalse()
     {
         QStringList typeList;
         typeList.append("nofiles");
@@ -35,18 +36,20 @@ private slots:
         capabilitiesMap["notify_push"] = notifyPushMap;
 
         const auto &capabilities = OCC::Capabilities(capabilitiesMap);
+        const auto filesPushNotificationsAvailable = capabilities.pushNotificationsAvailable().testFlag(OCC::PushNotificationType::Files);
 
-        QCOMPARE(capabilities.filesPushNotificationsAvailable(), false);
+        QCOMPARE(filesPushNotificationsAvailable, false);
     }
 
-    void testPushNotificationWebSocketAvailable_pushNotificationsNotAvailable_returnFalse()
+    void testPushNotificationsAvailable_pushNotificationsNotAvailable_returnFalse()
     {
         const auto &capabilities = OCC::Capabilities(QVariantMap());
+        const auto filesPushNotificationsAvailable = capabilities.pushNotificationsAvailable().testFlag(OCC::PushNotificationType::Files);
 
-        QCOMPARE(capabilities.filesPushNotificationsAvailable(), false);
+        QCOMPARE(filesPushNotificationsAvailable, false);
     }
 
-    void testPushNotificationWebSocketUrl_urlAvailable_returnUrl()
+    void testPushNotificationsWebSocketUrl_urlAvailable_returnUrl()
     {
         QString websocketUrl("testurl");
 

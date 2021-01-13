@@ -675,11 +675,6 @@ bool Folder::supportsSelectiveSync() const
     return !virtualFilesEnabled() && !isVfsOnOffSwitchPending();
 }
 
-bool Folder::supportsSyncNotificationsViaWebSocket() const
-{
-    return _accountState->account()->capabilities().filesPushNotificationsAvailable();
-}
-
 void Folder::saveToSettings() const
 {
     // Remove first to make sure we don't get duplicates

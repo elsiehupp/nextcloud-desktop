@@ -11,9 +11,9 @@ PushNotifications::PushNotifications(Account *account, QSharedPointer<AbstractWe
 {
 }
 
-bool PushNotifications::filesPushNotificationsAvailable() const
+PushNotificationTypes PushNotifications::pushNotificationsAvailable() const
 {
-    return _account->capabilities().filesPushNotificationsAvailable();
+    return _account->capabilities().pushNotificationsAvailable();
 }
 
 void PushNotifications::reconnect()
@@ -87,10 +87,8 @@ void PushNotifications::onWebSocketSslErrors(const QList<QSslError> &errors)
 
 void PushNotifications::setupFilesPushNotifications()
 {
-    const auto capabilities = _account->capabilities();
-
-    // Check for files push notifications
-    if (!capabilities.filesPushNotificationsAvailable())
+    // Check that push notifications for files are available
+    if (!pushNotificationsAvailable().testFlag(OCC::PushNotificationType::Files))
         return;
 
     // Disconnect signal handlers

@@ -26,6 +26,12 @@ namespace OCC {
 
 class DirectEditor;
 
+enum class PushNotificationType {
+    Files = 1
+};
+Q_DECLARE_FLAGS(PushNotificationTypes, PushNotificationType)
+Q_DECLARE_OPERATORS_FOR_FLAGS(PushNotificationTypes)
+
 /**
  * @brief The Capabilities class represents the capabilities of an ownCloud
  * server
@@ -48,11 +54,10 @@ public:
     bool shareResharing() const;
     bool chunkingNg() const;
 
-    // Whether push notifications for files are available
-    bool filesPushNotificationsAvailable() const;
+    /// Returns which kind of push notfications are available
+    PushNotificationTypes pushNotificationsAvailable() const;
 
-    // Websocket url for push notifications if available
-    // See pushNotificationFilesWebSocketAvailable()
+    /// Websocket url for files push notifications if available
     QString pushNotificationWebSocketUrl() const;
 
     /// disable parallel upload in chunking

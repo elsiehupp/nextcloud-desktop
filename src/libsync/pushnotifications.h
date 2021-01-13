@@ -2,6 +2,7 @@
 #define PUSHNOTIFICATIONS_H
 
 #include "websocket.h"
+#include "capabilities.h"
 
 namespace OCC {
 
@@ -17,7 +18,7 @@ public:
     // object is owned by the account state. Why not passing AccountState? Maybe would be better but this makes testing more difficult.
     PushNotifications(Account *account, QSharedPointer<AbstractWebSocket> webSocket = QSharedPointer<AbstractWebSocket>(new WebSocket));
     void reconnect();
-    bool filesPushNotificationsAvailable() const;
+    PushNotificationTypes pushNotificationsAvailable() const;
 
 signals:
     void filesChanged(Account *account);

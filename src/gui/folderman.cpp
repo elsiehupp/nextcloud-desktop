@@ -833,7 +833,7 @@ void FolderMan::slotEtagPollTimerTimeout()
     for (auto folder : _folderMap) {
         const auto pushNotifications = folder->accountState()->pushNotifications();
 
-        if (!pushNotifications->filesPushNotificationsAvailable())
+        if (!(pushNotifications->pushNotificationsAvailable().testFlag(PushNotificationType::Files)))
             foldersToRun.append(folder);
     }
 
@@ -1666,7 +1666,7 @@ void FolderMan::slotReconnectToPushNotificationsForFiles(const Folder::Map &fold
     for (auto folder : folderMap) {
         const auto pushNotifications = folder->accountState()->pushNotifications();
 
-        if (pushNotifications->filesPushNotificationsAvailable()) {
+        if (pushNotifications->pushNotificationsAvailable().testFlag(PushNotificationType::Files)) {
             connect(pushNotifications.data(), &PushNotifications::filesChanged, this, &FolderMan::slotProcessFilesPushNotification);
         }
     }
