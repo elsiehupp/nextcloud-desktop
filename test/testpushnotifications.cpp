@@ -98,7 +98,7 @@ class TestPushNotifications : public QObject
     Q_OBJECT
 
 private slots:
-    void testReconnect_correctCredentials_AuthenticatedOnWebSocket()
+    void testReconnect_correctCredentials_authenticatedOnWebSocket()
     {
         const QString user = "user";
         const QString password = "password";
