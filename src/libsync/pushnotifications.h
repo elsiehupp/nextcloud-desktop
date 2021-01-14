@@ -1,8 +1,11 @@
 #ifndef PUSHNOTIFICATIONS_H
 #define PUSHNOTIFICATIONS_H
 
-#include "websocket.h"
+#include <QWebSocket>
+
 #include "capabilities.h"
+
+class TestPushNotifications;
 
 namespace OCC {
 
@@ -14,13 +17,31 @@ class PushNotifications : public QObject
     Q_OBJECT
 
 public:
-    // Question: Is it okay to pass a raw account pointer? Because PushNotifications don't really own the account. The PushNotifications
-    // object is owned by the account state. Why not passing AccountState? Maybe would be better but this makes testing more difficult.
-    PushNotifications(Account *account, QSharedPointer<AbstractWebSocket> webSocket = QSharedPointer<AbstractWebSocket>(new WebSocket));
-    void reconnect();
+    PushNotifications(Account *account);
+
+    /**
+     * Setup push notifications
+     *
+     * This method needs to be called before push notifications can be used.
+     */
+    void setup();
+
+    /**
+     * Reset push notifications
+     *
+     * After a call to this function the object will be in a state like after a call to setup.
+     */
+    void reset();
+
+    /**
+     * Get the types of push notifications available
+     */
     PushNotificationTypes pushNotificationsAvailable() const;
 
 signals:
+    /**
+     * Will be emitted if files on the server changed
+     */
     void filesChanged(Account *account);
 
 private:
@@ -28,10 +49,11 @@ private:
     void connectWebSocket();
     void disconnectWebSocket();
     void authenticateOnWebSocket();
-    void setupFilesPushNotifications();
 
     Account *_account = nullptr;
-    QSharedPointer<AbstractWebSocket> _webSocket = nullptr;
+    QSharedPointer<QWebSocket> _webSocket = nullptr;
+
+    friend class ::TestPushNotifications;
 
 private slots:
     void onWebSocketConnected();

@@ -19,7 +19,6 @@
 #include <QByteArray>
 #include <QElapsedTimer>
 #include <QPointer>
-#include <QtWebSockets/QWebSocket>
 #include "connectionvalidator.h"
 #include "creds/abstractcredentials.h"
 #include "pushnotifications.h"
