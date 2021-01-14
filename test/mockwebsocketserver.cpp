@@ -59,3 +59,5 @@ void MockWebSocketServer::setRequestsWithResponses(const QVector<RequestWithResp
 {
     _requestsWithResponses = messages;
 }
+
+#include "mockwebsocketserver.moc"
