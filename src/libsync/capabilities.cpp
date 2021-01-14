@@ -16,6 +16,7 @@
 
 #include <QVariantMap>
 #include <QLoggingCategory>
+#include <QUrl>
 
 #include <QDebug>
 
@@ -190,9 +191,9 @@ PushNotificationTypes Capabilities::pushNotificationsAvailable() const
     return pushNotificationTypes;
 }
 
-QString Capabilities::pushNotificationWebSocketUrl() const
+QUrl Capabilities::pushNotificationWebSocketUrl() const
 {
-    return _capabilities["notify_push"].toMap()["endpoints"].toMap()["websocket"].toString();
+    return QUrl(_capabilities["notify_push"].toMap()["endpoints"].toMap()["websocket"].toString());
 }
 
 bool Capabilities::chunkingParallelUploadDisabled() const
