@@ -62,7 +62,7 @@ AccountState::AccountState(AccountPtr account)
         }
     });
 
-    _pushNotifications->reconnect();
+    _pushNotifications->setup();
 }
 
 AccountState::~AccountState() = default;

@@ -1,32 +1,14 @@
 #include <QTest>
 #include <QVector>
+#include <QWebSocketServer>
 
 #include "account.h"
 #include "common.h"
 #include "pushnotifications.h"
+#include "mockwebsocketserver.h"
 #include "creds/abstractcredentials.h"
 
 using namespace std::chrono_literals;
-
-class WebSocketStub : public OCC::AbstractWebSocket
-{
-    Q_OBJECT
-public:
-    void open(const QUrl & /*url*/) override
-    {
-        emit connected();
-    }
-    void close() override { }
-    qint64 sendTextMessage(const QString &message) override
-    {
-        ++sendTextMessageCalledCount;
-        sendTextMessageCalledArguments.append(message);
-        return 0;
-    }
-
-    uint32_t sendTextMessageCalledCount = 0;
-    QVector<QString> sendTextMessageCalledArguments;
-};
 
 class CredentialsStub : public OCC::AbstractCredentials
 {
@@ -59,11 +41,6 @@ private:
     QString _password;
 };
 
-QSharedPointer<WebSocketStub> createWebSocket()
-{
-    return QSharedPointer<WebSocketStub>(new WebSocketStub);
-}
-
 QSharedPointer<OCC::Account> createAccount()
 {
     auto account = OCC::Account::create();
@@ -71,7 +48,7 @@ QSharedPointer<OCC::Account> createAccount()
     QStringList typeList;
     typeList.append("files");
 
-    QString websocketUrl("testurl");
+    QString websocketUrl("ws://localhost:12345");
 
     QVariantMap endpointsMap;
     endpointsMap["websocket"] = websocketUrl;
@@ -88,9 +65,9 @@ QSharedPointer<OCC::Account> createAccount()
     return account;
 }
 
-QSharedPointer<OCC::PushNotifications> createPushNotifications(QSharedPointer<WebSocketStub> webSocket, OCC::Account *account)
+QSharedPointer<OCC::PushNotifications> createPushNotifications(OCC::Account *account)
 {
-    return QSharedPointer<OCC::PushNotifications>(new OCC::PushNotifications(account, webSocket));
+    return QSharedPointer<OCC::PushNotifications>(new OCC::PushNotifications(account));
 }
 
 class TestPushNotifications : public QObject
@@ -102,84 +79,142 @@ private slots:
     {
         const QString user = "user";
         const QString password = "password";
-        auto webSocket = createWebSocket();
+
+        QEventLoop loop;
+        QTimer::singleShot(5000, [&]() {
+            loop.quit();
+            QFAIL("No messages arrived");
+        });
+
+        bool userSended = false;
+        MockWebSocketServer mockServer;
+        connect(&mockServer, &MockWebSocketServer::processTextMessage, [&](QWebSocket *socket, QString message) {
+            if (message == user) {
+                userSended = true;
+                return;
+            } else if (message == password) {
+                QCOMPARE(userSended, true);
+                loop.quit();
+                return;
+            }
+            QFAIL("Unexpected message");
+        });
+
+
         auto account = createAccount();
         auto credentials = new CredentialsStub(user, password);
         account->setCredentials(credentials);
-        auto pushNotifications = createPushNotifications(webSocket, account.data());
-        pushNotifications->reconnect();
+        auto pushNotifications = createPushNotifications(account.data());
+        pushNotifications->setup();
 
-        wait(4ms);
-
-        QCOMPARE(webSocket->sendTextMessageCalledCount, 2);
-        QCOMPARE(webSocket->sendTextMessageCalledArguments[0], user);
-        QCOMPARE(webSocket->sendTextMessageCalledArguments[1], password);
+        loop.exec();
     }
 
     void testOnWebSocketTextMessageReceived_notifyFileMessage_emitFilesChanged()
     {
-        bool wasFilesChangedEmitted = false;
         const QString user = "user";
         const QString password = "password";
-        auto webSocket = createWebSocket();
+        MockWebSocketServer mockServer;
+
+        connect(&mockServer, &MockWebSocketServer::processTextMessage, [&](QWebSocket *sender, QString message) {
+            if (message == password) {
+                sender->sendTextMessage("notify_file");
+                return;
+            }
+        });
+
         auto account = createAccount();
         auto credentials = new CredentialsStub(user, password);
         account->setCredentials(credentials);
-        auto pushNotifications = createPushNotifications(webSocket, account.data());
-        pushNotifications->reconnect();
+        auto pushNotifications = createPushNotifications(account.data());
 
-        connect(pushNotifications.data(), &OCC::PushNotifications::filesChanged, [&](OCC::Account * /*account*/) {
-            wasFilesChangedEmitted = true;
+        QEventLoop loop;
+        QTimer::singleShot(5000, [&]() {
+            loop.quit();
+            QFAIL("No files changed event emitted");
         });
 
-        emit webSocket->textMessageReceived("notify_file");
-        wait(1s);
+        connect(pushNotifications.data(), &OCC::PushNotifications::filesChanged, [&](OCC::Account * /*account*/) {
+            loop.quit();
+        });
 
-        QCOMPARE(wasFilesChangedEmitted, true);
+        pushNotifications->setup();
+
+        loop.exec();
     }
 
     void testOnWebSocketTextMessageReceived_invalidCredentialsMessage_reconnectWebSocket()
     {
         const QString user = "user";
         const QString password = "password";
-        auto webSocket = createWebSocket();
+
+        QEventLoop loop;
+        QTimer::singleShot(5000, [&]() {
+            loop.quit();
+            QFAIL("No retry");
+        });
+
+        bool userSended = false;
+        MockWebSocketServer mockServer;
+        quint16 passwordSendedCount = 0;
+        connect(&mockServer, &MockWebSocketServer::processTextMessage, [&](QWebSocket *socket, QString message) {
+            if (message == password) {
+                if (passwordSendedCount == 0) {
+                    socket->sendTextMessage("err: Invalid credentials");
+                }
+                ++passwordSendedCount;
+                if (passwordSendedCount == 2) {
+                    loop.quit();
+                }
+            }
+        });
+
+
         auto account = createAccount();
         auto credentials = new CredentialsStub(user, password);
         account->setCredentials(credentials);
-        auto pushNotifications = createPushNotifications(webSocket, account.data());
-        pushNotifications->reconnect();
+        auto pushNotifications = createPushNotifications(account.data());
+        pushNotifications->setup();
 
-        webSocket->sendTextMessageCalledCount = 0;
-        webSocket->sendTextMessageCalledArguments.clear();
-
-        emit webSocket->textMessageReceived("err: Invalid credentials");
-        wait(1s);
-
-        QCOMPARE(webSocket->sendTextMessageCalledCount, 2);
-        QCOMPARE(webSocket->sendTextMessageCalledArguments[0], user);
-        QCOMPARE(webSocket->sendTextMessageCalledArguments[1], password);
+        loop.exec();
     }
 
     void testOnWebSocketError_connectionLost_reconnectWebSocket()
     {
         const QString user = "user";
         const QString password = "password";
-        auto webSocket = createWebSocket();
+
+        QEventLoop loop;
+        QTimer::singleShot(5000, [&]() {
+            loop.quit();
+            QFAIL("No reconnect");
+        });
+
+        bool userSended = false;
+        MockWebSocketServer mockServer;
+        quint16 passwordSendedCount = 0;
+
+
         auto account = createAccount();
         auto credentials = new CredentialsStub(user, password);
         account->setCredentials(credentials);
-        auto pushNotifications = createPushNotifications(webSocket, account.data());
-        pushNotifications->reconnect();
+        auto pushNotifications = createPushNotifications(account.data());
+        connect(&mockServer, &MockWebSocketServer::processTextMessage, [&](QWebSocket *socket, QString message) {
+            if (message == password) {
+                if (passwordSendedCount == 0) {
+                    // This a little bit ugly but I had no better idea how to trigger a error on the websocket client.
+                    // The websocket that is retrived through the server is not connected to the error signal.
+                    emit pushNotifications->_webSocket->error(QAbstractSocket::SocketError::NetworkError);
+                }
+                ++passwordSendedCount;
+                if (passwordSendedCount == 2) {
+                    loop.quit();
+                }
+            }
+        });
+        pushNotifications->setup();
 
-        webSocket->sendTextMessageCalledCount = 0;
-        webSocket->sendTextMessageCalledArguments.clear();
-
-        emit webSocket->error(QAbstractSocket::SocketError::NetworkError);
-        wait(1s);
-
-        QCOMPARE(webSocket->sendTextMessageCalledCount, 2);
-        QCOMPARE(webSocket->sendTextMessageCalledArguments[0], user);
-        QCOMPARE(webSocket->sendTextMessageCalledArguments[1], password);
+        loop.exec();
     }
 };
 
