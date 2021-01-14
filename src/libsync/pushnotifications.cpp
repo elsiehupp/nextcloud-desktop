@@ -112,7 +112,7 @@ void PushNotifications::openWebSocket()
     const auto capabilities = _account->capabilities();
     const auto webSocketUrl = capabilities.pushNotificationWebSocketUrl();
 
-    if (!_webSocket && webSocketUrl != "") {
+    if (!_webSocket) {
         qInfo() << "Create websocket";
         _webSocket = QSharedPointer<QWebSocket>(new QWebSocket);
     }
@@ -124,7 +124,7 @@ void PushNotifications::openWebSocket()
         connect(_webSocket.data(), &QWebSocket::disconnected, this, &PushNotifications::onWebSocketDisconnected);
 
         qInfo() << "Open connection to websocket on:" << webSocketUrl;
-        _webSocket->open(QUrl(webSocketUrl));
+        _webSocket->open(webSocketUrl);
     }
 }
 }

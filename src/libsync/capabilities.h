@@ -58,7 +58,7 @@ public:
     PushNotificationTypes pushNotificationsAvailable() const;
 
     /// Websocket url for files push notifications if available
-    QString pushNotificationWebSocketUrl() const;
+    QUrl pushNotificationWebSocketUrl() const;
 
     /// disable parallel upload in chunking
     bool chunkingParallelUploadDisabled() const;
