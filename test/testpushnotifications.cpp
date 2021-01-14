@@ -3,7 +3,6 @@
 #include <QWebSocketServer>
 
 #include "account.h"
-#include "common.h"
 #include "pushnotifications.h"
 #include "mockwebsocketserver.h"
 #include "creds/abstractcredentials.h"
@@ -75,7 +74,7 @@ class TestPushNotifications : public QObject
     Q_OBJECT
 
 private slots:
-    void testReconnect_correctCredentials_authenticatedOnWebSocket()
+    void testSetup_correctCredentials_authenticatedOnWebSocket()
     {
         const QString user = "user";
         const QString password = "password";

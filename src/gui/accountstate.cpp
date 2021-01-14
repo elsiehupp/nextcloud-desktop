@@ -44,7 +44,6 @@ AccountState::AccountState(AccountPtr account)
     , _waitingForNewCredentials(false)
     , _maintenanceToConnectedDelay(60000 + (qrand() % (4 * 60000))) // 1-5min delay
     , _remoteWipe(new RemoteWipe(_account))
-    , _pushNotifications(QSharedPointer<PushNotifications>(new PushNotifications(account.data())))
 {
     qRegisterMetaType<AccountState *>("AccountState*");
 
@@ -62,7 +61,7 @@ AccountState::AccountState(AccountPtr account)
         }
     });
 
-    _pushNotifications->setup();
+    enablePushNotifications();
 }
 
 AccountState::~AccountState() = default;
@@ -71,6 +70,14 @@ AccountState *AccountState::loadFromSettings(AccountPtr account, QSettings & /*s
 {
     auto accountState = new AccountState(account);
     return accountState;
+}
+
+void AccountState::enablePushNotifications()
+{
+    _pushNotifications = QSharedPointer<PushNotifications>(new PushNotifications(_account.data()));
+
+    if (_account->capabilities().pushNotificationsAvailable().testFlag(PushNotificationType::Files))
+        _pushNotifications->setup();
 }
 
 void AccountState::writeToSettings(QSettings & /*settings*/)
@@ -486,9 +493,9 @@ AccountApp *AccountState::findApp(const QString &appId) const
     return nullptr;
 }
 
-QSharedPointer<PushNotifications> AccountState::pushNotifications() const
+PushNotifications *AccountState::pushNotifications() const
 {
-    return _pushNotifications;
+    return _pushNotifications.data();
 }
 
 /*-------------------------------------------------------------------------------------*/

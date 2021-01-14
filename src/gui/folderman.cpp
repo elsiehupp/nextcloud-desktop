@@ -1659,7 +1659,7 @@ void FolderMan::slotReconnectToPushNotificationsForFiles(const Folder::Map &fold
     for (auto folder : folderMap) {
         const auto pushNotifications = folder->accountState()->pushNotifications();
 
-        disconnect(pushNotifications.data(), &PushNotifications::filesChanged, this, &FolderMan::slotProcessFilesPushNotification);
+        disconnect(pushNotifications, &PushNotifications::filesChanged, this, &FolderMan::slotProcessFilesPushNotification);
     }
 
     // Reconnect them
@@ -1667,7 +1667,7 @@ void FolderMan::slotReconnectToPushNotificationsForFiles(const Folder::Map &fold
         const auto pushNotifications = folder->accountState()->pushNotifications();
 
         if (pushNotifications->pushNotificationsAvailable().testFlag(PushNotificationType::Files)) {
-            connect(pushNotifications.data(), &PushNotifications::filesChanged, this, &FolderMan::slotProcessFilesPushNotification);
+            connect(pushNotifications, &PushNotifications::filesChanged, this, &FolderMan::slotProcessFilesPushNotification);
         }
     }
 }
