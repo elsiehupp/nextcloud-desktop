@@ -36,6 +36,4 @@ private:
     QVector<RequestWithResponse> _requestsWithResponses;
 };
 
-#include "mockwebsocketserver.moc"
-
 #endif // MOCKWEBSOCKETSERVER_H
