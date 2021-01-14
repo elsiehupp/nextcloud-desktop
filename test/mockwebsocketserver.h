@@ -20,8 +20,6 @@ public:
 
     void sendTextMessage(const QString &message);
 
-    QVector<QString> messagesReceived;
-
 signals:
     void closed();
     void processTextMessage(QWebSocket *sender, QString message);
@@ -33,8 +31,7 @@ private slots:
     void setRequestsWithResponses(const QVector<RequestWithResponse> &messages);
 
 private:
-    QWebSocketServer
-        *_webSocketServer;
+    QWebSocketServer *_webSocketServer;
     QList<QWebSocket *> _clients;
     QVector<RequestWithResponse> _requestsWithResponses;
 };

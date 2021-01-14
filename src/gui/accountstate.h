@@ -163,7 +163,7 @@ public:
     ///Asks for user credentials
     void handleInvalidCredentials();
 
-    QSharedPointer<PushNotifications> pushNotifications() const;
+    PushNotifications *pushNotifications() const;
 
 public slots:
     /// Triggers a ping to the server to update state and
@@ -173,6 +173,7 @@ public slots:
 private:
     void setState(State state);
     void fetchNavigationApps();
+    void enablePushNotifications();
 
 signals:
     void stateChanged(State state);
