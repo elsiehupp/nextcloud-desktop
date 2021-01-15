@@ -14,6 +14,7 @@ PushNotifications::PushNotifications(Account *account, QObject *parent)
 
 void PushNotifications::setup()
 {
+    _failedAuthenticationAttemptsCount = 0;
     reconnectToWebSocket();
 }
 
@@ -71,9 +72,13 @@ void PushNotifications::onWebSocketTextMessageReceived(const QString &message)
         emit filesChanged(_account);
     } else if (message == "authenticated") {
         qCInfo(lcPushNotifications) << "Authenticated successful on websocket";
+        _failedAuthenticationAttemptsCount = 0;
+        emit ready();
     } else if (message == "err: Invalid credentials") {
         qCInfo(lcPushNotifications) << "Invalid credentials submitted to websocket";
-        reconnectToWebSocket();
+        if (!tryReconnectToWebSocket()) {
+            emit canNotAuthenticate();
+        }
     }
 }
 
@@ -81,14 +86,19 @@ void PushNotifications::onWebSocketError(QAbstractSocket::SocketError error)
 {
     qCWarning(lcPushNotifications) << "Websocket error: " << error;
 
-    switch (error) {
-        // TODO: Maybe few more cases go here that need an reconnect ?
-    case QAbstractSocket::NetworkError:
-        reconnectToWebSocket();
-        break;
-    default:
-        qCWarning(lcPushNotifications) << "Websocket error not handled";
+    emit connectionLost();
+}
+
+bool PushNotifications::tryReconnectToWebSocket()
+{
+    ++_failedAuthenticationAttemptsCount;
+    if (_failedAuthenticationAttemptsCount >= _maxAllowedFailedAuthenticationAttempts) {
+        return false;
     }
+
+    reconnectToWebSocket();
+
+    return true;
 }
 
 void PushNotifications::onWebSocketSslErrors(const QList<QSslError> &errors)

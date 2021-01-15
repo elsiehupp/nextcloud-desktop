@@ -49,20 +49,28 @@ public:
 
 signals:
     /**
+     * Will be emitted after a successful connection and authentication
+     */
+    void ready();
+
+    /**
      * Will be emitted if files on the server changed
      */
     void filesChanged(Account *account);
 
-private:
-    void openWebSocket();
-    void reconnectToWebSocket();
-    void closeWebSocket();
-    void authenticateOnWebSocket();
+    /**
+     * Will be emitted if push notifications are unable to authenticate
+     *
+     * It's save to call #PushNotifications::setup() after this signal has been emitted.
+     */
+    void canNotAuthenticate();
 
-    Account *_account = nullptr;
-    QWebSocket *_webSocket = nullptr;
-
-    friend class ::TestPushNotifications;
+    /**
+     * Will be emitted if push notifications are unable to connect or the connection timed out
+     *
+     * It's save to call #PushNotifications::setup() after this signal has been emitted.
+     */
+    void connectionLost();
 
 private slots:
     void onWebSocketConnected();
@@ -70,6 +78,20 @@ private slots:
     void onWebSocketTextMessageReceived(const QString &message);
     void onWebSocketError(QAbstractSocket::SocketError error);
     void onWebSocketSslErrors(const QList<QSslError> &errors);
+
+private:
+    friend class ::TestPushNotifications;
+
+    void openWebSocket();
+    void reconnectToWebSocket();
+    void closeWebSocket();
+    void authenticateOnWebSocket();
+    bool tryReconnectToWebSocket();
+
+    static constexpr uint8_t _maxAllowedFailedAuthenticationAttempts = 3;
+    Account *_account = nullptr;
+    QWebSocket *_webSocket = nullptr;
+    uint8_t _failedAuthenticationAttemptsCount = 0;
 };
 
 }

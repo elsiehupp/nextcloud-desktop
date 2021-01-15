@@ -291,6 +291,9 @@ private slots:
     void slotReconnectToPushNotificationsForFiles(const Folder::Map &);
 
     void slotProcessFilesPushNotification(Account *account);
+    void slotPushNotificationsCanNotAuthenticate();
+    void slotPushNotificationsConnectionLost();
+    void slotPushNotificationsReady();
 
 private:
     /** Adds a new folder, does not add it to the account settings and
@@ -351,6 +354,14 @@ private:
     NavigationPaneHelper _navigationPaneHelper;
 
     bool _appRestartRequired = false;
+
+    /**
+       Indicates if push notifications are useable
+
+       This is independent of the capabilities from the server. We may have the case that the server expose push notifications
+       capabilities but we are unable to connect.
+    */
+    bool _pushNotificationsUseable = false;
 
     static FolderMan *_instance;
     explicit FolderMan(QObject *parent = nullptr);
