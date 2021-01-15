@@ -24,6 +24,7 @@
 #include "filesystem.h"
 #include "lockwatcher.h"
 #include "common/asserts.h"
+#include "pushnotifications.h"
 #include <syncengine.h>
 
 #ifdef Q_OS_MAC
@@ -828,14 +829,15 @@ void FolderMan::slotStartScheduledFolderSync()
 
 void FolderMan::slotEtagPollTimerTimeout()
 {
-    // Some folders need not to be checked because the use the new push notifications
+    const auto folderMapValues = _folderMap.values();
     QList<Folder *> foldersToRun;
-    for (auto folder : _folderMap) {
-        const auto pushNotifications = folder->accountState()->pushNotifications();
 
-        if (!(pushNotifications->pushNotificationsAvailable().testFlag(PushNotificationType::Files)))
-            foldersToRun.append(folder);
-    }
+    // Some folders need not to be checked because the use the new push notifications
+    std::copy_if(folderMapValues.begin(), folderMapValues.end(), foldersToRun.begin(), [](Folder *folder) -> bool {
+        const auto &capabilities = folder->accountState()->account()->capabilities();
+        return !(capabilities.availablePushNotifications() & PushNotificationType::Files);
+    });
+
 
     runEtagJobsIfPossible(foldersToRun);
 }
@@ -1655,19 +1657,13 @@ void FolderMan::restartApplication()
 
 void FolderMan::slotReconnectToPushNotificationsForFiles(const Folder::Map &folderMap)
 {
-    // Disconnect the signal handlers
+    // Connect signal handlers
     for (auto folder : folderMap) {
-        const auto pushNotifications = folder->accountState()->pushNotifications();
+        const auto &capabilities = folder->accountState()->account()->capabilities();
 
-        disconnect(pushNotifications, &PushNotifications::filesChanged, this, &FolderMan::slotProcessFilesPushNotification);
-    }
-
-    // Reconnect them
-    for (auto folder : folderMap) {
-        const auto pushNotifications = folder->accountState()->pushNotifications();
-
-        if (pushNotifications->pushNotificationsAvailable().testFlag(PushNotificationType::Files)) {
-            connect(pushNotifications, &PushNotifications::filesChanged, this, &FolderMan::slotProcessFilesPushNotification);
+        if (capabilities.availablePushNotifications() & PushNotificationType::Files) {
+            const auto pushNotifications = folder->accountState()->pushNotifications();
+            connect(pushNotifications, &PushNotifications::filesChanged, this, &FolderMan::slotProcessFilesPushNotification, Qt::UniqueConnection);
         }
     }
 }
@@ -1676,8 +1672,9 @@ void FolderMan::slotProcessFilesPushNotification(Account *account)
 {
     for (auto folder : _folderMap) {
         // Just run on the folders that belong to this account
-        if (folder->accountState()->account() != account)
+        if (folder->accountState()->account() != account) {
             continue;
+        }
 
         runEtagJobIfPossible(folder);
     }

@@ -4,19 +4,17 @@
 
 namespace OCC {
 
-PushNotifications::PushNotifications(Account *account)
-    : _account(account)
-{
-}
+Q_LOGGING_CATEGORY(lcPushNotifications, "nextcloud.sync.pushnotifications", QtInfoMsg)
 
-PushNotificationTypes PushNotifications::pushNotificationsAvailable() const
+PushNotifications::PushNotifications(Account *account, QObject *parent)
+    : QObject(parent)
+    , _account(account)
 {
-    return _account->capabilities().pushNotificationsAvailable();
 }
 
 void PushNotifications::setup()
 {
-    connectWebSocket();
+    reconnectToWebSocket();
 }
 
 void PushNotifications::reset()
@@ -24,32 +22,26 @@ void PushNotifications::reset()
     setup();
 }
 
-void PushNotifications::connectWebSocket()
+void PushNotifications::reconnectToWebSocket()
 {
-    disconnectWebSocket();
+    closeWebSocket();
     openWebSocket();
 }
 
-void PushNotifications::disconnectWebSocket()
+void PushNotifications::closeWebSocket()
 {
     if (_webSocket) {
-        qInfo() << "Disconnect from websocket";
-        _webSocket->close();
+        qCInfo(lcPushNotifications) << "Close websocket";
 
-        // Disconnect signal handlers
-        disconnect(_webSocket.data(), &QWebSocket::connected, this, &PushNotifications::onWebSocketConnected);
-        disconnect(_webSocket.data(), &QWebSocket::disconnected, this, &PushNotifications::onWebSocketDisconnected);
-        disconnect(_webSocket.data(), &QWebSocket::sslErrors, this, &PushNotifications::onWebSocketSslErrors);
-        disconnect(_webSocket.data(), QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), this, &PushNotifications::onWebSocketError);
+        _webSocket->close();
     }
 }
 
 void PushNotifications::onWebSocketConnected()
 {
-    disconnect(_webSocket.data(), &QWebSocket::textMessageReceived, this, &PushNotifications::onWebSocketTextMessageReceived);
-    connect(_webSocket.data(), &QWebSocket::textMessageReceived, this, &PushNotifications::onWebSocketTextMessageReceived);
+    qCInfo(lcPushNotifications) << "Connected to websocket";
 
-    qInfo() << "Connected to websocket";
+    connect(_webSocket, &QWebSocket::textMessageReceived, this, &PushNotifications::onWebSocketTextMessageReceived, Qt::UniqueConnection);
 
     authenticateOnWebSocket();
 }
@@ -67,63 +59,61 @@ void PushNotifications::authenticateOnWebSocket()
 
 void PushNotifications::onWebSocketDisconnected()
 {
-    qInfo() << "Disconnected from websocket";
+    qCInfo(lcPushNotifications) << "Disconnected from websocket";
 }
 
 void PushNotifications::onWebSocketTextMessageReceived(const QString &message)
 {
-    qInfo() << "Received push notification:" << message;
+    qCInfo(lcPushNotifications) << "Received push notification:" << message;
 
     if (message == "notify_file") {
-        qInfo() << "Files push notifications arrived";
+        qCInfo(lcPushNotifications) << "Files push notifications arrived";
         emit filesChanged(_account);
     } else if (message == "authenticated") {
-        qInfo() << "Authenticated successful on websocket";
+        qCInfo(lcPushNotifications) << "Authenticated successful on websocket";
     } else if (message == "err: Invalid credentials") {
-        qInfo() << "Invalid credentials submitted to websocket";
-        connectWebSocket();
+        qCInfo(lcPushNotifications) << "Invalid credentials submitted to websocket";
+        reconnectToWebSocket();
     }
 }
 
 void PushNotifications::onWebSocketError(QAbstractSocket::SocketError error)
 {
-    qWarning() << "Received web socket error: " << error;
+    qCWarning(lcPushNotifications) << "Websocket error: " << error;
 
     switch (error) {
         // TODO: Maybe few more cases go here that need an reconnect ?
     case QAbstractSocket::NetworkError:
-        connectWebSocket();
+        reconnectToWebSocket();
         break;
-    default:;
-        // TODO: How to handle such a case?
-        Q_ASSERT(false && "Unexpected network error not handled");
+    default:
+        qCWarning(lcPushNotifications) << "Websocket error not handled";
     }
 }
 
 void PushNotifications::onWebSocketSslErrors(const QList<QSslError> &errors)
 {
-    qWarning() << "Received web socket ssl errors: " << errors;
-    // TODO: What to do with them?
+    qCWarning(lcPushNotifications) << "Received websocket ssl errors:" << errors;
 }
 
 void PushNotifications::openWebSocket()
 {
     // Open websocket
     const auto capabilities = _account->capabilities();
-    const auto webSocketUrl = capabilities.pushNotificationWebSocketUrl();
+    const auto webSocketUrl = capabilities.pushNotificationsWebSocketUrl();
 
     if (!_webSocket) {
-        qInfo() << "Create websocket";
-        _webSocket = QSharedPointer<QWebSocket>(new QWebSocket);
+        qCInfo(lcPushNotifications) << "Create websocket";
+        _webSocket = new QWebSocket(QString(), QWebSocketProtocol::VersionLatest, this);
     }
 
     if (_webSocket) {
-        connect(_webSocket.data(), QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), this, &PushNotifications::onWebSocketError);
-        connect(_webSocket.data(), &QWebSocket::sslErrors, this, &PushNotifications::onWebSocketSslErrors);
-        connect(_webSocket.data(), &QWebSocket::connected, this, &PushNotifications::onWebSocketConnected);
-        connect(_webSocket.data(), &QWebSocket::disconnected, this, &PushNotifications::onWebSocketDisconnected);
+        connect(_webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), this, &PushNotifications::onWebSocketError, Qt::UniqueConnection);
+        connect(_webSocket, &QWebSocket::sslErrors, this, &PushNotifications::onWebSocketSslErrors, Qt::UniqueConnection);
+        connect(_webSocket, &QWebSocket::connected, this, &PushNotifications::onWebSocketConnected, Qt::UniqueConnection);
+        connect(_webSocket, &QWebSocket::disconnected, this, &PushNotifications::onWebSocketDisconnected, Qt::UniqueConnection);
 
-        qInfo() << "Open connection to websocket on:" << webSocketUrl;
+        qCInfo(lcPushNotifications) << "Open connection to websocket on:" << webSocketUrl;
         _webSocket->open(webSocketUrl);
     }
 }

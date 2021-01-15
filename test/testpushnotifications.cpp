@@ -1,6 +1,7 @@
 #include <QTest>
 #include <QVector>
 #include <QWebSocketServer>
+#include <QSignalSpy>
 
 #include "account.h"
 #include "pushnotifications.h"
@@ -40,7 +41,7 @@ private:
     QString _password;
 };
 
-QSharedPointer<OCC::Account> createAccount()
+OCC::AccountPtr createAccount()
 {
     auto account = OCC::Account::create();
 
@@ -64,9 +65,9 @@ QSharedPointer<OCC::Account> createAccount()
     return account;
 }
 
-QSharedPointer<OCC::PushNotifications> createPushNotifications(OCC::Account *account)
+std::unique_ptr<OCC::PushNotifications> createPushNotifications(OCC::Account *account)
 {
-    return QSharedPointer<OCC::PushNotifications>(new OCC::PushNotifications(account));
+    return std::make_unique<OCC::PushNotifications>(account);
 }
 
 class TestPushNotifications : public QObject
@@ -78,35 +79,28 @@ private slots:
     {
         const QString user = "user";
         const QString password = "password";
-
-        QEventLoop loop;
-        QTimer::singleShot(5000, [&]() {
-            loop.quit();
-            QFAIL("No messages arrived");
-        });
-
-        bool userSended = false;
         MockWebSocketServer mockServer;
-        connect(&mockServer, &MockWebSocketServer::processTextMessage, [&](QWebSocket *socket, QString message) {
-            if (message == user) {
-                userSended = true;
-                return;
-            } else if (message == password) {
-                QCOMPARE(userSended, true);
-                loop.quit();
-                return;
-            }
-            QFAIL("Unexpected message");
-        });
-
-
+        QSignalSpy spy(&mockServer, &MockWebSocketServer::processTextMessage);
+        QVERIFY(spy.isValid());
         auto account = createAccount();
         auto credentials = new CredentialsStub(user, password);
         account->setCredentials(credentials);
         auto pushNotifications = createPushNotifications(account.data());
+
+        // Setup push notifications
         pushNotifications->setup();
 
-        loop.exec();
+        // Wait for authentication
+        spy.wait();
+
+        // Right authentication data should be sent
+        QCOMPARE(spy.count(), 2);
+
+        const auto userSent = spy.at(0).at(1).toString();
+        const auto passwordSent = spy.at(1).at(1).toString();
+
+        QCOMPARE(userSent, user);
+        QCOMPARE(passwordSent, password);
     }
 
     void testOnWebSocketTextMessageReceived_notifyFileMessage_emitFilesChanged()
@@ -114,106 +108,91 @@ private slots:
         const QString user = "user";
         const QString password = "password";
         MockWebSocketServer mockServer;
+        QSignalSpy processTextMessageSpy(&mockServer, &MockWebSocketServer::processTextMessage);
+        QVERIFY(processTextMessageSpy.isValid());
 
-        connect(&mockServer, &MockWebSocketServer::processTextMessage, [&](QWebSocket *sender, QString message) {
-            if (message == password) {
-                sender->sendTextMessage("notify_file");
-                return;
-            }
-        });
-
-        auto account = createAccount();
+        auto account = createAccount().data();
         auto credentials = new CredentialsStub(user, password);
         account->setCredentials(credentials);
-        auto pushNotifications = createPushNotifications(account.data());
+        auto pushNotifications = createPushNotifications(account);
+        QSignalSpy filesChangedSpy(pushNotifications.get(), &OCC::PushNotifications::filesChanged);
+        QVERIFY(filesChangedSpy.isValid());
 
-        QEventLoop loop;
-        QTimer::singleShot(5000, [&]() {
-            loop.quit();
-            QFAIL("No files changed event emitted");
-        });
-
-        connect(pushNotifications.data(), &OCC::PushNotifications::filesChanged, [&](OCC::Account * /*account*/) {
-            loop.quit();
-        });
-
+        // Setup push notifications
         pushNotifications->setup();
 
-        loop.exec();
+        // Wait for authentication and then send notify_file push notification
+        processTextMessageSpy.wait();
+        QCOMPARE(processTextMessageSpy.count(), 2);
+        const auto socket = processTextMessageSpy.at(0).at(0).value<QWebSocket *>();
+        socket->sendTextMessage("notify_file");
+
+        // filesChanged signal should be emitted
+        QVERIFY(filesChangedSpy.wait());
+        QCOMPARE(filesChangedSpy.count(), 1);
+        // FIXME: This fails because accountFilesChanged is always nullptr. What do I wrong?
+        // I have checked that in a normal signal handler I get the correct account pointer.
+        // auto accountFilesChanged = filesChangedSpy.at(0).at(0).value<OCC::Account *>();
+        // QCOMPARE(accountFilesChanged, account);
     }
 
     void testOnWebSocketTextMessageReceived_invalidCredentialsMessage_reconnectWebSocket()
     {
         const QString user = "user";
         const QString password = "password";
-
-        QEventLoop loop;
-        QTimer::singleShot(5000, [&]() {
-            loop.quit();
-            QFAIL("No retry");
-        });
-
-        bool userSended = false;
         MockWebSocketServer mockServer;
-        quint16 passwordSendedCount = 0;
-        connect(&mockServer, &MockWebSocketServer::processTextMessage, [&](QWebSocket *socket, QString message) {
-            if (message == password) {
-                if (passwordSendedCount == 0) {
-                    socket->sendTextMessage("err: Invalid credentials");
-                }
-                ++passwordSendedCount;
-                if (passwordSendedCount == 2) {
-                    loop.quit();
-                }
-            }
-        });
-
+        QSignalSpy spy(&mockServer, &MockWebSocketServer::processTextMessage);
+        QVERIFY(spy.isValid());
 
         auto account = createAccount();
         auto credentials = new CredentialsStub(user, password);
         account->setCredentials(credentials);
         auto pushNotifications = createPushNotifications(account.data());
+
+        // Setup push notifications
         pushNotifications->setup();
 
-        loop.exec();
+        // Wait for authentication attempt and then sent invalid credentials
+        spy.wait();
+        QCOMPARE(spy.count(), 2);
+        const auto socket = spy.at(0).at(0).value<QWebSocket *>();
+        const auto firstPasswordSent = spy.at(1).at(1).toString();
+        QCOMPARE(firstPasswordSent, password);
+        socket->sendTextMessage("err: Invalid credentials");
+
+        // Wait for a new authentication attempt
+        spy.wait();
+        QCOMPARE(spy.count(), 4);
+        const auto secondPasswordSent = spy.at(3).at(1).toString();
+        QCOMPARE(secondPasswordSent, password);
     }
 
     void testOnWebSocketError_connectionLost_reconnectWebSocket()
     {
         const QString user = "user";
         const QString password = "password";
-
-        QEventLoop loop;
-        QTimer::singleShot(5000, [&]() {
-            loop.quit();
-            QFAIL("No reconnect");
-        });
-
-        bool userSended = false;
         MockWebSocketServer mockServer;
-        quint16 passwordSendedCount = 0;
-
+        QSignalSpy spy(&mockServer, &MockWebSocketServer::processTextMessage);
+        QVERIFY(spy.isValid());
 
         auto account = createAccount();
         auto credentials = new CredentialsStub(user, password);
         account->setCredentials(credentials);
         auto pushNotifications = createPushNotifications(account.data());
-        connect(&mockServer, &MockWebSocketServer::processTextMessage, [&](QWebSocket *socket, QString message) {
-            if (message == password) {
-                if (passwordSendedCount == 0) {
-                    // This a little bit ugly but I had no better idea how to trigger a error on the websocket client.
-                    // The websocket that is retrived through the server is not connected to the error signal.
-                    emit pushNotifications->_webSocket->error(QAbstractSocket::SocketError::NetworkError);
-                }
-                ++passwordSendedCount;
-                if (passwordSendedCount == 2) {
-                    loop.quit();
-                }
-            }
-        });
+
+        // Setup push notifications
         pushNotifications->setup();
 
-        loop.exec();
+        // Wait for authentication and then sent a network error
+        spy.wait();
+        QCOMPARE(spy.count(), 2);
+        // FIXME: This a little bit ugly but I had no better idea how to trigger a error on the websocket client.
+        // The websocket that is retrived through the server is not connected to the error signal.
+        emit pushNotifications->_webSocket->error(QAbstractSocket::SocketError::NetworkError);
+
+        // Wait for reconnect of the socket
+        spy.wait();
+        QCOMPARE(spy.count(), 4);
     }
 };
 

@@ -177,21 +177,23 @@ bool Capabilities::chunkingNg() const
     return _capabilities["dav"].toMap()["chunking"].toByteArray() >= "1.0";
 }
 
-PushNotificationTypes Capabilities::pushNotificationsAvailable() const
+PushNotificationTypes Capabilities::availablePushNotifications() const
 {
+    if (!_capabilities.contains("notify_push")) {
+        return PushNotificationType::None;
+    }
+
+    const auto types = _capabilities["notify_push"].toMap()["type"].toStringList();
     PushNotificationTypes pushNotificationTypes;
 
-    if (!_capabilities.contains("notify_push"))
-        return pushNotificationTypes;
-
-    const auto &types = _capabilities["notify_push"].toMap()["type"].toStringList();
-    if (types.contains("files"))
+    if (types.contains("files")) {
         pushNotificationTypes.setFlag(PushNotificationType::Files);
+    }
 
     return pushNotificationTypes;
 }
 
-QUrl Capabilities::pushNotificationWebSocketUrl() const
+QUrl Capabilities::pushNotificationsWebSocketUrl() const
 {
     return QUrl(_capabilities["notify_push"].toMap()["endpoints"].toMap()["websocket"].toString());
 }

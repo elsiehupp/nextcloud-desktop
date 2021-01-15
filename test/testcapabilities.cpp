@@ -19,7 +19,7 @@ private slots:
         capabilitiesMap["notify_push"] = notifyPushMap;
 
         const auto &capabilities = OCC::Capabilities(capabilitiesMap);
-        const auto filesPushNotificationsAvailable = capabilities.pushNotificationsAvailable().testFlag(OCC::PushNotificationType::Files);
+        const auto filesPushNotificationsAvailable = capabilities.availablePushNotifications().testFlag(OCC::PushNotificationType::Files);
 
         QCOMPARE(filesPushNotificationsAvailable, true);
     }
@@ -36,7 +36,7 @@ private slots:
         capabilitiesMap["notify_push"] = notifyPushMap;
 
         const auto &capabilities = OCC::Capabilities(capabilitiesMap);
-        const auto filesPushNotificationsAvailable = capabilities.pushNotificationsAvailable().testFlag(OCC::PushNotificationType::Files);
+        const auto filesPushNotificationsAvailable = capabilities.availablePushNotifications().testFlag(OCC::PushNotificationType::Files);
 
         QCOMPARE(filesPushNotificationsAvailable, false);
     }
@@ -44,7 +44,7 @@ private slots:
     void testPushNotificationsAvailable_pushNotificationsNotAvailable_returnFalse()
     {
         const auto &capabilities = OCC::Capabilities(QVariantMap());
-        const auto filesPushNotificationsAvailable = capabilities.pushNotificationsAvailable().testFlag(OCC::PushNotificationType::Files);
+        const auto filesPushNotificationsAvailable = capabilities.availablePushNotifications().testFlag(OCC::PushNotificationType::Files);
 
         QCOMPARE(filesPushNotificationsAvailable, false);
     }
@@ -64,7 +64,7 @@ private slots:
 
         const auto &capabilities = OCC::Capabilities(capabilitiesMap);
 
-        QCOMPARE(capabilities.pushNotificationWebSocketUrl(), websocketUrl);
+        QCOMPARE(capabilities.pushNotificationsWebSocketUrl(), websocketUrl);
     }
 };
 

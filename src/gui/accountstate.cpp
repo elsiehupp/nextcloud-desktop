@@ -21,6 +21,7 @@
 #include "logger.h"
 #include "configfile.h"
 #include "ocsnavigationappsjob.h"
+#include "pushnotifications.h"
 
 #include <QSettings>
 #include <QTimer>
@@ -74,10 +75,11 @@ AccountState *AccountState::loadFromSettings(AccountPtr account, QSettings & /*s
 
 void AccountState::enablePushNotifications()
 {
-    _pushNotifications = QSharedPointer<PushNotifications>(new PushNotifications(_account.data()));
+    _pushNotifications = new PushNotifications(_account.data(), this);
 
-    if (_account->capabilities().pushNotificationsAvailable().testFlag(PushNotificationType::Files))
+    if (_account->capabilities().availablePushNotifications() & PushNotificationType::Files) {
         _pushNotifications->setup();
+    }
 }
 
 void AccountState::writeToSettings(QSettings & /*settings*/)
@@ -495,7 +497,7 @@ AccountApp *AccountState::findApp(const QString &appId) const
 
 PushNotifications *AccountState::pushNotifications() const
 {
-    return _pushNotifications.data();
+    return _pushNotifications;
 }
 
 /*-------------------------------------------------------------------------------------*/
