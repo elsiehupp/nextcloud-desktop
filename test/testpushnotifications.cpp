@@ -172,27 +172,145 @@ private slots:
         const QString user = "user";
         const QString password = "password";
         MockWebSocketServer mockServer;
-        QSignalSpy spy(&mockServer, &MockWebSocketServer::processTextMessage);
-        QVERIFY(spy.isValid());
+        QSignalSpy processTextMessageSpy(&mockServer, &MockWebSocketServer::processTextMessage);
+        QVERIFY(processTextMessageSpy.isValid());
 
         auto account = createAccount();
         auto credentials = new CredentialsStub(user, password);
         account->setCredentials(credentials);
         auto pushNotifications = createPushNotifications(account.data());
+        QSignalSpy connectionLostSpy(pushNotifications.get(), &OCC::PushNotifications::connectionLost);
+        QVERIFY(connectionLostSpy.isValid());
 
         // Setup push notifications
         pushNotifications->setup();
 
         // Wait for authentication and then sent a network error
-        spy.wait();
-        QCOMPARE(spy.count(), 2);
+        processTextMessageSpy.wait();
+        QCOMPARE(processTextMessageSpy.count(), 2);
         // FIXME: This a little bit ugly but I had no better idea how to trigger a error on the websocket client.
         // The websocket that is retrived through the server is not connected to the error signal.
         emit pushNotifications->_webSocket->error(QAbstractSocket::SocketError::NetworkError);
 
-        // Wait for reconnect of the socket
-        spy.wait();
-        QCOMPARE(spy.count(), 4);
+        // Wait for connectionLost signal
+        connectionLostSpy.wait();
+        QCOMPARE(connectionLostSpy.count(), 1);
+    }
+
+    void testSetup_credentialsThreeTimeRejected_emitCanNotAuthenticate()
+    {
+        const QString user = "user";
+        const QString password = "password";
+        MockWebSocketServer mockServer;
+        QSignalSpy processTextMessageSpy(&mockServer, &MockWebSocketServer::processTextMessage);
+        QVERIFY(processTextMessageSpy.isValid());
+
+        auto account = createAccount();
+        auto credentials = new CredentialsStub(user, password);
+        account->setCredentials(credentials);
+        auto pushNotifications = createPushNotifications(account.data());
+        QSignalSpy canNotAuthenticateSpy(pushNotifications.get(), &OCC::PushNotifications::canNotAuthenticate);
+        QVERIFY(canNotAuthenticateSpy.isValid());
+
+        // Setup push notifications
+        pushNotifications->setup();
+
+        // Let three authentication attempts fail
+        processTextMessageSpy.wait();
+        QCOMPARE(processTextMessageSpy.count(), 2);
+        auto socket = processTextMessageSpy.at(0).at(0).value<QWebSocket *>();
+        socket->sendTextMessage("err: Invalid credentials");
+
+        processTextMessageSpy.wait();
+        QCOMPARE(processTextMessageSpy.count(), 4);
+        socket = processTextMessageSpy.at(2).at(0).value<QWebSocket *>();
+        socket->sendTextMessage("err: Invalid credentials");
+
+        processTextMessageSpy.wait();
+        QCOMPARE(processTextMessageSpy.count(), 6);
+        socket = processTextMessageSpy.at(4).at(0).value<QWebSocket *>();
+        socket->sendTextMessage("err: Invalid credentials");
+
+        // Now the canNotAuthenticate Signal should be emitted
+        canNotAuthenticateSpy.wait();
+        QCOMPARE(canNotAuthenticateSpy.count(), 1);
+    }
+
+    void testSetup_maxConnectionAttemptsReached_canConnectAgain()
+    {
+        const QString user = "user";
+        const QString password = "password";
+        MockWebSocketServer mockServer;
+        QSignalSpy processTextMessageSpy(&mockServer, &MockWebSocketServer::processTextMessage);
+        QVERIFY(processTextMessageSpy.isValid());
+
+        auto account = createAccount();
+        auto credentials = new CredentialsStub(user, password);
+        account->setCredentials(credentials);
+        auto pushNotifications = createPushNotifications(account.data());
+        QSignalSpy canNotAuthenticateSpy(pushNotifications.get(), &OCC::PushNotifications::canNotAuthenticate);
+        QVERIFY(canNotAuthenticateSpy.isValid());
+
+        // Setup push notifications
+        pushNotifications->setup();
+
+        // Let three authentication attempts fail
+        processTextMessageSpy.wait();
+        QCOMPARE(processTextMessageSpy.count(), 2);
+        auto socket = processTextMessageSpy.at(0).at(0).value<QWebSocket *>();
+        socket->sendTextMessage("err: Invalid credentials");
+
+        processTextMessageSpy.wait();
+        QCOMPARE(processTextMessageSpy.count(), 4);
+        socket = processTextMessageSpy.at(2).at(0).value<QWebSocket *>();
+        socket->sendTextMessage("err: Invalid credentials");
+
+        processTextMessageSpy.wait();
+        QCOMPARE(processTextMessageSpy.count(), 6);
+        socket = processTextMessageSpy.at(4).at(0).value<QWebSocket *>();
+        socket->sendTextMessage("err: Invalid credentials");
+
+        // Now the canNotAuthenticate Signal should be emitted
+        canNotAuthenticateSpy.wait();
+        QCOMPARE(canNotAuthenticateSpy.count(), 1);
+
+        // Now call setup again and it should do another connection attempt
+        pushNotifications->setup();
+        processTextMessageSpy.wait();
+        QCOMPARE(processTextMessageSpy.count(), 8);
+
+        auto userSent = processTextMessageSpy.at(6).at(1).toString();
+        auto passwordSent = processTextMessageSpy.at(7).at(1).toString();
+        QCOMPARE(userSent, user);
+        QCOMPARE(passwordSent, password);
+    }
+
+    void testAuthentication_correctCredentials_emitReady()
+    {
+        const QString user = "user";
+        const QString password = "password";
+        MockWebSocketServer mockServer;
+        QSignalSpy processTextMessageSpy(&mockServer, &MockWebSocketServer::processTextMessage);
+        QVERIFY(processTextMessageSpy.isValid());
+        auto account = createAccount();
+        auto credentials = new CredentialsStub(user, password);
+        account->setCredentials(credentials);
+        auto pushNotifications = createPushNotifications(account.data());
+        QSignalSpy readySpy(pushNotifications.get(), &OCC::PushNotifications::ready);
+        QVERIFY(readySpy.isValid());
+
+        // Setup push notifications
+        pushNotifications->setup();
+
+        // Wait for authentication and send authenticated response
+        processTextMessageSpy.wait();
+        QCOMPARE(processTextMessageSpy.count(), 2);
+        const auto socket = processTextMessageSpy.at(0).at(0).value<QWebSocket *>();
+        socket->sendTextMessage("authenticated");
+
+        // Wait for ready signal
+        readySpy.wait();
+        QCOMPARE(readySpy.count(), 1);
     }
 };
 
