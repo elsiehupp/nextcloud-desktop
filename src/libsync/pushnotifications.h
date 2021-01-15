@@ -1,3 +1,17 @@
+/*
+ * Copyright (C) by Felix Weilbach <felix.weilbach@nextcloud.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * for more details.
+ */
+
 #ifndef PUSHNOTIFICATIONS_H
 #define PUSHNOTIFICATIONS_H
 
@@ -17,7 +31,7 @@ class PushNotifications : public QObject
     Q_OBJECT
 
 public:
-    PushNotifications(Account *account);
+    explicit PushNotifications(Account *account, QObject *parent = nullptr);
 
     /**
      * Setup push notifications
@@ -33,11 +47,6 @@ public:
      */
     void reset();
 
-    /**
-     * Get the types of push notifications available
-     */
-    PushNotificationTypes pushNotificationsAvailable() const;
-
 signals:
     /**
      * Will be emitted if files on the server changed
@@ -46,12 +55,12 @@ signals:
 
 private:
     void openWebSocket();
-    void connectWebSocket();
-    void disconnectWebSocket();
+    void reconnectToWebSocket();
+    void closeWebSocket();
     void authenticateOnWebSocket();
 
     Account *_account = nullptr;
-    QSharedPointer<QWebSocket> _webSocket = nullptr;
+    QWebSocket *_webSocket = nullptr;
 
     friend class ::TestPushNotifications;
 

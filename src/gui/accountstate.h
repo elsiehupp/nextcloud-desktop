@@ -21,7 +21,6 @@
 #include <QPointer>
 #include "connectionvalidator.h"
 #include "creds/abstractcredentials.h"
-#include "pushnotifications.h"
 #include <memory>
 
 class QSettings;
@@ -32,6 +31,7 @@ class AccountState;
 class Account;
 class AccountApp;
 class RemoteWipe;
+class PushNotifications;
 
 using AccountStatePtr = QExplicitlySharedDataPointer<AccountState>;
 using AccountAppList = QList<AccountApp *>;
@@ -204,7 +204,7 @@ private:
     QPointer<ConnectionValidator> _connectionValidator;
     QByteArray _notificationsEtagResponseHeader;
     QByteArray _navigationAppsEtagResponseHeader;
-    QSharedPointer<PushNotifications> _pushNotifications = nullptr;
+    PushNotifications *_pushNotifications = nullptr;
 
     /**
      * Starts counting when the server starts being back up after 503 or

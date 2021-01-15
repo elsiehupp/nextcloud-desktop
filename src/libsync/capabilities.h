@@ -27,6 +27,7 @@ namespace OCC {
 class DirectEditor;
 
 enum class PushNotificationType {
+    None = 0,
     Files = 1
 };
 Q_DECLARE_FLAGS(PushNotificationTypes, PushNotificationType)
@@ -55,10 +56,10 @@ public:
     bool chunkingNg() const;
 
     /// Returns which kind of push notfications are available
-    PushNotificationTypes pushNotificationsAvailable() const;
+    PushNotificationTypes availablePushNotifications() const;
 
     /// Websocket url for files push notifications if available
-    QUrl pushNotificationWebSocketUrl() const;
+    QUrl pushNotificationsWebSocketUrl() const;
 
     /// disable parallel upload in chunking
     bool chunkingParallelUploadDisabled() const;
