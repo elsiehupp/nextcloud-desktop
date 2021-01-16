@@ -23,8 +23,6 @@ MockWebSocketServer::~MockWebSocketServer()
 
     _webSocketServer->close();
     qDeleteAll(_clients.begin(), _clients.end());
-
-    delete _webSocketServer;
 }
 
 void MockWebSocketServer::processTextMessageInternal(const QString &message)
