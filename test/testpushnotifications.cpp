@@ -196,6 +196,7 @@ private slots:
         emit pushNotifications->_webSocket->error(QAbstractSocket::SocketError::NetworkError);
 
         // Wait for connectionLost signal
+        // FIXME: For some reason it takes a few seconds until this signal arrives. Why is this?
         connectionLostSpy.wait();
         QCOMPARE(connectionLostSpy.count(), 1);
     }
@@ -340,6 +341,7 @@ private slots:
         emit pushNotifications->_webSocket->sslErrors(QList<QSslError>());
 
         // Wait for connectionLost signal
+        // FIXME: For some reason it takes a few seconds until this signal arrives. Why is this?
         connectionLostSpy.wait();
         QCOMPARE(connectionLostSpy.count(), 1);
     }
