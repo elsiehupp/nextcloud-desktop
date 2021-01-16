@@ -96,7 +96,16 @@ bool PushNotifications::tryReconnectToWebSocket()
         return false;
     }
 
-    reconnectToWebSocket();
+    if (!_reconnectTimer) {
+        _reconnectTimer = new QTimer;
+    }
+
+    _reconnectTimer->setInterval(_reconnectTimerInterval);
+    _reconnectTimer->setSingleShot(true);
+    connect(_reconnectTimer, &QTimer::timeout, [this]() {
+        reconnectToWebSocket();
+    });
+    _reconnectTimer->start();
 
     return true;
 }
@@ -127,5 +136,10 @@ void PushNotifications::openWebSocket()
         qCInfo(lcPushNotifications) << "Open connection to websocket on:" << webSocketUrl;
         _webSocket->open(webSocketUrl);
     }
+}
+
+void PushNotifications::setReconnectTimerInterval(uint32_t interval)
+{
+    _reconnectTimerInterval = interval;
 }
 }
