@@ -12,8 +12,7 @@
  * for more details.
  */
 
-#ifndef PUSHNOTIFICATIONS_H
-#define PUSHNOTIFICATIONS_H
+#pragma once
 
 #include <QWebSocket>
 #include <QTimer>
@@ -86,8 +85,6 @@ private slots:
     void onWebSocketSslErrors(const QList<QSslError> &errors);
 
 private:
-    friend class ::TestPushNotifications;
-
     void openWebSocket();
     void reconnectToWebSocket();
     void closeWebSocket();
@@ -101,8 +98,8 @@ private:
     uint8_t _failedAuthenticationAttemptsCount = 0;
     QTimer *_reconnectTimer = nullptr;
     uint32_t _reconnectTimerInterval = 20 * 1000;
+
+    friend class ::TestPushNotifications;
 };
 
 }
-
-#endif // PUSHNOTIFICATIONS_H
