@@ -67,7 +67,10 @@ OCC::AccountPtr createAccount()
 
 std::unique_ptr<OCC::PushNotifications> createPushNotifications(OCC::Account *account)
 {
-    return std::make_unique<OCC::PushNotifications>(account);
+    auto pushNotifications = std::make_unique<OCC::PushNotifications>(account);
+    pushNotifications->setReconnectTimerInterval(0);
+
+    return std::move(pushNotifications);
 }
 
 class TestPushNotifications : public QObject

@@ -16,6 +16,7 @@
 #define PUSHNOTIFICATIONS_H
 
 #include <QWebSocket>
+#include <QTimer>
 
 #include "capabilities.h"
 
@@ -46,6 +47,11 @@ public:
      * After a call to this function the object will be in a state like after a call to setup.
      */
     void reset();
+
+    /**
+     * Set the interval for reconnection attempts
+     */
+    void setReconnectTimerInterval(uint32_t interval);
 
 signals:
     /**
@@ -87,11 +93,14 @@ private:
     void closeWebSocket();
     void authenticateOnWebSocket();
     bool tryReconnectToWebSocket();
+    void initReconnectTimer();
 
     static constexpr uint8_t _maxAllowedFailedAuthenticationAttempts = 3;
     Account *_account = nullptr;
     QWebSocket *_webSocket = nullptr;
     uint8_t _failedAuthenticationAttemptsCount = 0;
+    QTimer *_reconnectTimer = nullptr;
+    uint32_t _reconnectTimerInterval = 20 * 1000;
 };
 
 }
