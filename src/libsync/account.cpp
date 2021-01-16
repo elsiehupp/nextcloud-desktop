@@ -60,12 +60,12 @@ Account::Account(QObject *parent)
 
 AccountPtr Account::create()
 {
-    AccountPtr acc = AccountPtr(new Account(nullptr));
+    AccountPtr acc = AccountPtr(new Account);
     acc->setSharedThis(acc);
 
-    //TODO: This probably needs to have a better
-    // coupling, but it should work for now.
-    acc->e2e()->setAccount(acc);
+        //TODO: This probably needs to have a better
+        // coupling, but it should work for now.
+        acc->e2e()->setAccount(acc);
 
     return acc;
 }
@@ -642,17 +642,17 @@ void Account::slotDirectEditingRecieved(const QJsonDocument &json)
         const QString id = editor.value("id").toString();
         const QString name = editor.value("name").toString();
 
-        if (!id.isEmpty() && !name.isEmpty()) {
+        if(!id.isEmpty() && !name.isEmpty()) {
             auto mimeTypes = editor.value("mimetypes").toArray();
             auto optionalMimeTypes = editor.value("optionalMimetypes").toArray();
 
             auto *directEditor = new DirectEditor(id, name);
 
-            foreach (auto mimeType, mimeTypes) {
+            foreach(auto mimeType, mimeTypes) {
                 directEditor->addMimetype(mimeType.toString().toLatin1());
             }
 
-            foreach (auto optionalMimeType, optionalMimeTypes) {
+            foreach(auto optionalMimeType, optionalMimeTypes) {
                 directEditor->addOptionalMimetype(optionalMimeType.toString().toLatin1());
             }
 

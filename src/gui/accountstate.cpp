@@ -55,7 +55,7 @@ AccountState::AccountState(AccountPtr account)
     connect(account.data(), &Account::credentialsAsked,
         this, &AccountState::slotCredentialsAsked);
 
-    connect(this, &AccountState::isConnectedChanged, [=] {
+    connect(this, &AccountState::isConnectedChanged, [=]{
         // Get the Apps available on the server if we're now connected.
         if (isConnected()) {
             fetchNavigationApps();
@@ -480,9 +480,9 @@ AccountAppList AccountState::appList() const
     return _apps;
 }
 
-AccountApp *AccountState::findApp(const QString &appId) const
+AccountApp* AccountState::findApp(const QString &appId) const
 {
-    if (!appId.isEmpty()) {
+    if(!appId.isEmpty()) {
         const auto apps = appList();
         const auto it = std::find_if(apps.cbegin(), apps.cend(), [appId](const auto &app) {
             return app->id() == appId;

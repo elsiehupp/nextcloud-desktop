@@ -82,7 +82,6 @@ public:
 
     /// Use the account as parent
     explicit AccountState(AccountPtr account);
-
     ~AccountState();
 
     /** Creates an account state from settings and an Account object.
@@ -108,7 +107,7 @@ public:
     bool isSignedOut() const;
 
     AccountAppList appList() const;
-    AccountApp *findApp(const QString &appId) const;
+    AccountApp* findApp(const QString &appId) const;
 
     /** A user-triggered sign out which disconnects, stops syncs
      * for the account and forgets the password. */
@@ -228,6 +227,7 @@ private:
      * Holds the App names and URLs available on the server
      */
     AccountAppList _apps;
+
 };
 
 class AccountApp : public QObject
@@ -236,7 +236,7 @@ class AccountApp : public QObject
 public:
     AccountApp(const QString &name, const QUrl &url,
         const QString &id, const QUrl &iconUrl,
-        QObject *parent = nullptr);
+        QObject* parent = nullptr);
 
     QString name() const;
     QUrl url() const;

@@ -63,7 +63,6 @@ FolderMan::FolderMan(QObject *parent)
     QObject::connect(&_etagPollTimer, &QTimer::timeout, this, &FolderMan::slotEtagPollTimerTimeout);
     _etagPollTimer.start();
 
-
     _startScheduledSyncTimer.setSingleShot(true);
     connect(&_startScheduledSyncTimer, &QTimer::timeout,
         this, &FolderMan::slotStartScheduledFolderSync);
@@ -837,7 +836,6 @@ void FolderMan::slotEtagPollTimerTimeout()
         const auto &capabilities = folder->accountState()->account()->capabilities();
         return !(_pushNotificationsUseable && (capabilities.availablePushNotifications() & PushNotificationType::Files));
     });
-
 
     runEtagJobsIfPossible(foldersToRun);
 }

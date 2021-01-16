@@ -356,10 +356,10 @@ private:
     bool _appRestartRequired = false;
 
     /**
-       Indicates if push notifications are useable
-
-       This is independent of the capabilities from the server. We may have the case that the server expose push notifications
-       capabilities but we are unable to connect.
+     *  Indicates if push notifications are useable
+     *
+     * This is independent of the capabilities from the server. We may have the case that the server expose push notifications
+     * capabilities but we are unable to connect.
     */
     bool _pushNotificationsUseable = false;
 

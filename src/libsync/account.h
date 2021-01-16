@@ -239,7 +239,7 @@ public:
     /// Called by network jobs on credential errors, emits invalidCredentials()
     void handleInvalidCredentials();
 
-    ClientSideEncryption *e2e();
+    ClientSideEncryption* e2e();
 
     /// Used in RemoteWipe
     void retrieveAppPassword();
@@ -342,12 +342,11 @@ private:
      *
      *       We introduce this dirty hack here, to allow deleting them upon Remote Wipe.
     */
-public:
-    void setRemoteWipeRequested_HACK() { _isRemoteWipeRequested_HACK = true; }
-    bool isRemoteWipeRequested_HACK() { return _isRemoteWipeRequested_HACK; }
-
-private:
-    bool _isRemoteWipeRequested_HACK = false;
+    public:
+        void setRemoteWipeRequested_HACK() { _isRemoteWipeRequested_HACK = true; }
+        bool isRemoteWipeRequested_HACK() { return _isRemoteWipeRequested_HACK; }
+    private:
+        bool _isRemoteWipeRequested_HACK = false;
     // <-- FIXME MS@2019-12-07
 };
 }
