@@ -150,14 +150,14 @@ public:
     bool uploadConflictFiles() const;
 
     // Direct Editing
-    void addDirectEditor(DirectEditor *directEditor);
-    DirectEditor *getDirectEditorForMimetype(const QMimeType &mimeType);
-    DirectEditor *getDirectEditorForOptionalMimetype(const QMimeType &mimeType);
+    void addDirectEditor(DirectEditor* directEditor);
+    DirectEditor* getDirectEditorForMimetype(const QMimeType &mimeType);
+    DirectEditor* getDirectEditorForOptionalMimetype(const QMimeType &mimeType);
 
 private:
     QVariantMap _capabilities;
 
-    QList<DirectEditor *> _directEditors;
+    QList<DirectEditor*> _directEditors;
 };
 
 /*-------------------------------------------------------------------------------------*/
