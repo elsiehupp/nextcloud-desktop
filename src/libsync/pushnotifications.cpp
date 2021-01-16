@@ -104,6 +104,7 @@ bool PushNotifications::tryReconnectToWebSocket()
 void PushNotifications::onWebSocketSslErrors(const QList<QSslError> &errors)
 {
     qCWarning(lcPushNotifications) << "Received websocket ssl errors:" << errors;
+    emit connectionLost();
 }
 
 void PushNotifications::openWebSocket()
