@@ -12,8 +12,7 @@
  * for more details.
  */
 
-#ifndef MOCKWEBSOCKETSERVER_H
-#define MOCKWEBSOCKETSERVER_H
+#pragma once
 
 #include <QWebSocketServer>
 #include <QWebSocket>
@@ -39,5 +38,3 @@ private:
     QWebSocketServer *_webSocketServer;
     QList<QWebSocket *> _clients;
 };
-
-#endif // MOCKWEBSOCKETSERVER_H
