@@ -167,7 +167,7 @@ private slots:
         QCOMPARE(secondPasswordSent, password);
     }
 
-    void testOnWebSocketError_connectionLost_reconnectWebSocket()
+    void testOnWebSocketError_connectionLost_emitConnectionLost()
     {
         const QString user = "user";
         const QString password = "password";
@@ -311,6 +311,34 @@ private slots:
         // Wait for ready signal
         readySpy.wait();
         QCOMPARE(readySpy.count(), 1);
+    }
+
+    void testOnWebSocketSslError_sslError_emitConnectionLost()
+    {
+        const QString user = "user";
+        const QString password = "password";
+        MockWebSocketServer mockServer;
+        QSignalSpy processTextMessageSpy(&mockServer, &MockWebSocketServer::processTextMessage);
+        QVERIFY(processTextMessageSpy.isValid());
+
+        auto account = createAccount();
+        auto credentials = new CredentialsStub(user, password);
+        account->setCredentials(credentials);
+        auto pushNotifications = createPushNotifications(account.data());
+        QSignalSpy connectionLostSpy(pushNotifications.get(), &OCC::PushNotifications::connectionLost);
+        QVERIFY(connectionLostSpy.isValid());
+
+        // Setup push notifications
+        pushNotifications->setup();
+        processTextMessageSpy.wait();
+
+        // FIXME: This a little bit ugly but I had no better idea how to trigger a error on the websocket client.
+        // The websocket that is retrived through the server is not connected to the error signal.
+        emit pushNotifications->_webSocket->sslErrors(QList<QSslError>());
+
+        // Wait for connectionLost signal
+        connectionLostSpy.wait();
+        QCOMPARE(connectionLostSpy.count(), 1);
     }
 };
 
