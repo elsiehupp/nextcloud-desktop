@@ -203,7 +203,6 @@ private:
     QPointer<ConnectionValidator> _connectionValidator;
     QByteArray _notificationsEtagResponseHeader;
     QByteArray _navigationAppsEtagResponseHeader;
-    PushNotifications *_pushNotifications = nullptr;
 
     /**
      * Starts counting when the server starts being back up after 503 or

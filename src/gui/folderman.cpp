@@ -833,8 +833,11 @@ void FolderMan::slotEtagPollTimerTimeout()
 
     // Some folders need not to be checked because the use the new push notifications
     std::copy_if(folderMapValues.begin(), folderMapValues.end(), foldersToRun.begin(), [&](Folder *folder) -> bool {
-        const auto &capabilities = folder->accountState()->account()->capabilities();
-        return !(_pushNotificationsUseable && (capabilities.availablePushNotifications() & PushNotificationType::Files));
+        const auto account = folder->accountState()->account();
+        const auto &capabilities = account->capabilities();
+        const auto pushNotifications = account->pushNotifications();
+
+        return !(pushNotifications && pushNotifications->isReady());
     });
 
     runEtagJobsIfPossible(foldersToRun);
@@ -1655,17 +1658,12 @@ void FolderMan::restartApplication()
 
 void FolderMan::slotReconnectToPushNotificationsForFiles(const Folder::Map &folderMap)
 {
-    // Connect signal handlers
     for (auto folder : folderMap) {
-        const auto &capabilities = folder->accountState()->account()->capabilities();
+        const auto account = folder->accountState()->account();
 
-        if (_pushNotificationsUseable && (capabilities.availablePushNotifications() & PushNotificationType::Files)) {
-            const auto pushNotifications = folder->accountState()->pushNotifications();
-            connect(pushNotifications, &PushNotifications::filesChanged, this, &FolderMan::slotProcessFilesPushNotification, Qt::UniqueConnection);
-            connect(pushNotifications, &PushNotifications::connectionLost, this, &FolderMan::slotPushNotificationsConnectionLost, Qt::UniqueConnection);
-            connect(pushNotifications, &PushNotifications::canNotAuthenticate, this, &FolderMan::slotPushNotificationsCanNotAuthenticate, Qt::UniqueConnection);
-            connect(pushNotifications, &PushNotifications::canNotAuthenticate, this, &FolderMan::slotPushNotificationsReady, Qt::UniqueConnection);
-        }
+        tryToConnectToPushNotificationsForFiles(account.data());
+
+        connect(account.data(), &Account::pushNotificationsReady, this, &FolderMan::slotPushNotificationsReady, Qt::UniqueConnection);
     }
 }
 
@@ -1681,20 +1679,37 @@ void FolderMan::slotProcessFilesPushNotification(Account *account)
     }
 }
 
-void FolderMan::slotPushNotificationsConnectionLost()
+void FolderMan::slotPushNotificationsReady(Account *account)
 {
-    _pushNotificationsUseable = false;
+    tryToConnectToPushNotificationsForFiles(account);
 }
 
-void FolderMan::slotPushNotificationsCanNotAuthenticate()
+void FolderMan::tryToConnectToPushNotificationsForFiles(Account *account)
 {
-    _pushNotificationsUseable = false;
+    const auto pushNotifications = account->pushNotifications();
+
+    if (pushNotifications && pushNotifications->isReady()) {
+        connect(pushNotifications, &PushNotifications::filesChanged, this, &FolderMan::slotProcessFilesPushNotification, Qt::UniqueConnection);
+        connect(pushNotifications, &PushNotifications::connectionLost, this, &FolderMan::slotPushNotificationsConnectionLost, Qt::UniqueConnection);
+        connect(pushNotifications, &PushNotifications::canNotAuthenticate, this, &FolderMan::slotPushNotificationsCanNotAuthenticate, Qt::UniqueConnection);
+        connect(pushNotifications, &PushNotifications::canNotAuthenticate, this, &FolderMan::slotPushNotificationsReady, Qt::UniqueConnection);
+    }
 }
 
-void FolderMan::slotPushNotificationsReady()
-{
-    _pushNotificationsUseable = true;
-    slotReconnectToPushNotificationsForFiles(_folderMap);
-}
+// void FolderMan::slotPushNotificationsConnectionLost()
+// {
+//     _pushNotificationsUseable = false;
+// }
+
+// void FolderMan::slotPushNotificationsCanNotAuthenticate()
+// {
+//     _pushNotificationsUseable = false;
+// }
+
+// void FolderMan::slotPushNotificationsReady()
+// {
+//     _pushNotificationsUseable = true;
+//     slotReconnectToPushNotificationsForFiles(_folderMap);
+// }
 
 } // namespace OCC

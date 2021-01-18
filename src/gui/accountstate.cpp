@@ -62,7 +62,7 @@ AccountState::AccountState(AccountPtr account)
         }
     });
 
-    enablePushNotifications();
+    // enablePushNotifications();
 }
 
 AccountState::~AccountState() = default;
@@ -73,14 +73,14 @@ AccountState *AccountState::loadFromSettings(AccountPtr account, QSettings & /*s
     return accountState;
 }
 
-void AccountState::enablePushNotifications()
-{
-    _pushNotifications = new PushNotifications(_account.data(), this);
+// void AccountState::enablePushNotifications()
+// {
+//     _pushNotifications = new PushNotifications(_account.data(), this);
 
-    if (_account->capabilities().availablePushNotifications() & PushNotificationType::Files) {
-        _pushNotifications->setup();
-    }
-}
+//     if (_account->capabilities().availablePushNotifications() & PushNotificationType::Files) {
+//         _pushNotifications->setup();
+//     }
+// }
 
 void AccountState::writeToSettings(QSettings & /*settings*/)
 {

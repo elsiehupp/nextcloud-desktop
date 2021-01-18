@@ -20,6 +20,7 @@
 #include "creds/abstractcredentials.h"
 #include "capabilities.h"
 #include "theme.h"
+#include "pushnotifications.h"
 
 #include "common/asserts.h"
 #include "clientsideencryption.h"
@@ -201,6 +202,20 @@ void Account::setCredentials(AbstractCredentials *cred)
         this, &Account::slotCredentialsFetched);
     connect(_credentials.data(), &AbstractCredentials::asked,
         this, &Account::slotCredentialsAsked);
+
+    tryToSetupPushNotifications();
+}
+
+void Account::tryToSetupPushNotifications()
+{
+    if (_capabilities.availablePushNotifications() & PushNotificationType::Files) {
+        if (!_pushNotifications) {
+            _pushNotifications = new PushNotifications(this, this);
+            connect(_pushNotifications, &PushNotifications::ready, this, &Account::pushNotificationsReady);
+        }
+        // If push notifications already running it is no problem to call setup again
+        _pushNotifications->setup();
+    }
 }
 
 QUrl Account::davUrl() const

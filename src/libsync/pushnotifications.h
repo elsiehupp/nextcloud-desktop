@@ -52,6 +52,8 @@ public:
      */
     void setReconnectTimerInterval(uint32_t interval);
 
+    bool isReady() const;
+
 signals:
     /**
      * Will be emitted after a successful connection and authentication
