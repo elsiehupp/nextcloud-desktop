@@ -162,6 +162,8 @@ public:
     ///Asks for user credentials
     void handleInvalidCredentials();
 
+    PushNotifications *pushNotifications() const;
+
 public slots:
     /// Triggers a ping to the server to update state and
     /// connection status and errors.
@@ -170,7 +172,6 @@ public slots:
 private:
     void setState(State state);
     void fetchNavigationApps();
-    void enablePushNotifications();
 
 signals:
     void stateChanged(State state);
@@ -201,6 +202,7 @@ private:
     QPointer<ConnectionValidator> _connectionValidator;
     QByteArray _notificationsEtagResponseHeader;
     QByteArray _navigationAppsEtagResponseHeader;
+    PushNotifications *_pushNotifications = nullptr;
 
     /**
      * Starts counting when the server starts being back up after 503 or

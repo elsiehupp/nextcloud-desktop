@@ -55,14 +55,12 @@ AccountState::AccountState(AccountPtr account)
     connect(account.data(), &Account::credentialsAsked,
         this, &AccountState::slotCredentialsAsked);
 
-    connect(this, &AccountState::isConnectedChanged, [=]{
+    connect(this, &AccountState::isConnectedChanged, [=] {
         // Get the Apps available on the server if we're now connected.
         if (isConnected()) {
             fetchNavigationApps();
         }
     });
-
-    // enablePushNotifications();
 }
 
 AccountState::~AccountState() = default;
@@ -72,15 +70,6 @@ AccountState *AccountState::loadFromSettings(AccountPtr account, QSettings & /*s
     auto accountState = new AccountState(account);
     return accountState;
 }
-
-// void AccountState::enablePushNotifications()
-// {
-//     _pushNotifications = new PushNotifications(_account.data(), this);
-
-//     if (_account->capabilities().availablePushNotifications() & PushNotificationType::Files) {
-//         _pushNotifications->setup();
-//     }
-// }
 
 void AccountState::writeToSettings(QSettings & /*settings*/)
 {
@@ -493,6 +482,11 @@ AccountApp* AccountState::findApp(const QString &appId) const
     }
 
     return nullptr;
+}
+
+PushNotifications *AccountState::pushNotifications() const
+{
+    return _pushNotifications;
 }
 
 /*-------------------------------------------------------------------------------------*/

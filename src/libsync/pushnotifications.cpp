@@ -153,7 +153,6 @@ void PushNotifications::setReconnectTimerInterval(uint32_t interval)
     _reconnectTimerInterval = interval;
 }
 
-
 bool PushNotifications::isReady() const
 {
     return _isReady;

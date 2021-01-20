@@ -179,6 +179,7 @@ private slots:
         QCOMPARE(processTextMessageSpy.count(), 2);
         // FIXME: This a little bit ugly but I had no better idea how to trigger a error on the websocket client.
         // The websocket that is retrived through the server is not connected to the error signal.
+
         emit account->pushNotifications()->_webSocket->error(QAbstractSocket::SocketError::NetworkError);
 
         // Wait for connectionLost signal
@@ -196,7 +197,6 @@ private slots:
         FakeWebSocketServer fakeServer;
         QSignalSpy processTextMessageSpy(&fakeServer, &FakeWebSocketServer::processTextMessage);
         QVERIFY(processTextMessageSpy.isValid());
-
         auto account = createAccount();
         auto credentials = new CredentialsStub(user, password);
         account->setCredentials(credentials);
@@ -205,11 +205,11 @@ private slots:
         QSignalSpy authenticationFailedSpy(account->pushNotifications(), &OCC::PushNotifications::authenticationFailed);
         QVERIFY(authenticationFailedSpy.isValid());
 
-
         // Let three authentication attempts fail
         processTextMessageSpy.wait();
         QCOMPARE(processTextMessageSpy.count(), 2);
         auto socket = processTextMessageSpy.at(0).at(0).value<QWebSocket *>();
+
         processTextMessageSpy.clear();
         socket->sendTextMessage("err: Invalid credentials");
 
@@ -290,6 +290,7 @@ private slots:
         auto account = createAccount();
         auto credentials = new CredentialsStub(user, password);
         account->setCredentials(credentials);
+
         QSignalSpy connectionLostSpy(account->pushNotifications(), &OCC::PushNotifications::connectionLost);
         QVERIFY(connectionLostSpy.isValid());
 
