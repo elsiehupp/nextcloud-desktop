@@ -177,14 +177,10 @@ private slots:
         // Wait for authentication and then sent a network error
         processTextMessageSpy.wait();
         QCOMPARE(processTextMessageSpy.count(), 2);
-        // FIXME: This a little bit ugly but I had no better idea how to trigger a error on the websocket client.
-        // The websocket that is retrived through the server is not connected to the error signal.
-
-        emit account->pushNotifications()->_webSocket->error(QAbstractSocket::SocketError::NetworkError);
+        auto socket = processTextMessageSpy.at(0).at(0).value<QWebSocket *>();
+        socket->abort();
 
         // Wait for connectionLost signal
-        // FIXME: For some reason it takes a few seconds until this signal arrives. Why is this? Maybe because the
-        // state of the _webSocket gets not refrehed
         connectionLostSpy.wait();
         QCOMPARE(connectionLostSpy.count(), 1);
         QCOMPARE(account->pushNotifications()->isReady(), false);

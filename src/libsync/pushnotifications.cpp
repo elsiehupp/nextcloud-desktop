@@ -80,9 +80,7 @@ void PushNotifications::onWebSocketTextMessageReceived(const QString &message)
 
     if (message == "notify_file") {
         handleNotifyFile();
-    } else if (message == "notify_activity") {
-        handleNotification();
-    } else if (message == "notify_notification") {
+    } else if (message == "notify_activity" || message == "notify_notification") {
         handleNotification();
     } else if (message == "authenticated") {
         handleAuthenticated();
