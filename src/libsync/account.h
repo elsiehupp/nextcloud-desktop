@@ -282,8 +282,6 @@ signals:
     /// Used in RemoteWipe
     void appPasswordRetrieved(QString);
 
-    void filesChanged(Account *account);
-
     void pushNotificationsReady(Account *account);
 
 protected Q_SLOTS:
@@ -360,5 +358,6 @@ private:
 }
 
 Q_DECLARE_METATYPE(OCC::AccountPtr)
+Q_DECLARE_METATYPE(OCC::Account *)
 
 #endif //SERVERCONNECTION_H

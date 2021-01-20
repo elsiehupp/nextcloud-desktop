@@ -495,11 +495,6 @@ AccountApp* AccountState::findApp(const QString &appId) const
     return nullptr;
 }
 
-PushNotifications *AccountState::pushNotifications() const
-{
-    return _pushNotifications;
-}
-
 /*-------------------------------------------------------------------------------------*/
 
 AccountApp::AccountApp(const QString &name, const QUrl &url,

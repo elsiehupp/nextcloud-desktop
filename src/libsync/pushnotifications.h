@@ -33,6 +33,8 @@ class PushNotifications : public QObject
 public:
     explicit PushNotifications(Account *account, QObject *parent = nullptr);
 
+    ~PushNotifications();
+
     /**
      * Setup push notifications
      *
@@ -52,6 +54,11 @@ public:
      */
     void setReconnectTimerInterval(uint32_t interval);
 
+    /**
+     * Indicates if push notifications ready to use
+     *
+     * Ready to use means connected and authenticated.
+     */
     bool isReady() const;
 
 signals:
@@ -66,11 +73,16 @@ signals:
     void filesChanged(Account *account);
 
     /**
+     * Will be emitted if there is a new notification or activity on the server
+     */
+    void notification(Account *account);
+
+    /**
      * Will be emitted if push notifications are unable to authenticate
      *
      * It's save to call #PushNotifications::setup() after this signal has been emitted.
      */
-    void canNotAuthenticate();
+    void authenticationFailed();
 
     /**
      * Will be emitted if push notifications are unable to connect or the connection timed out
@@ -94,12 +106,17 @@ private:
     bool tryReconnectToWebSocket();
     void initReconnectTimer();
 
-    static constexpr uint8_t _maxAllowedFailedAuthenticationAttempts = 3;
+    void handleAuthenticated();
+    void handleNotifyFile();
+    void handleInvalidCredentials();
+    void handleNotification();
+
     Account *_account = nullptr;
     QWebSocket *_webSocket = nullptr;
     uint8_t _failedAuthenticationAttemptsCount = 0;
     QTimer *_reconnectTimer = nullptr;
     uint32_t _reconnectTimerInterval = 20 * 1000;
+    bool _isReady = false;
 
     friend class ::TestPushNotifications;
 };

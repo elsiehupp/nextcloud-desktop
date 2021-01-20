@@ -162,8 +162,6 @@ public:
     ///Asks for user credentials
     void handleInvalidCredentials();
 
-    PushNotifications *pushNotifications() const;
-
 public slots:
     /// Triggers a ping to the server to update state and
     /// connection status and errors.

@@ -288,9 +288,9 @@ private slots:
      */
     void slotScheduleFolderByTime();
 
-    void slotReconnectToPushNotificationsForFiles(const Folder::Map &);
+    void slotSetupPushNotifications(const Folder::Map &);
     void slotProcessFilesPushNotification(Account *account);
-    void slotPushNotificationsCanNotAuthenticate();
+    void slotPushNotificationsAuthenticationFailed();
     void slotPushNotificationsConnectionLost();
     void slotPushNotificationsReady(Account *account);
 

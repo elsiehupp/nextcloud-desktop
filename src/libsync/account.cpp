@@ -57,6 +57,7 @@ Account::Account(QObject *parent)
     , _davPath(Theme::instance()->webDavPath())
 {
     qRegisterMetaType<AccountPtr>("AccountPtr");
+    qRegisterMetaType<Account *>("Account*");
 }
 
 AccountPtr Account::create()
@@ -211,7 +212,8 @@ void Account::tryToSetupPushNotifications()
     if (_capabilities.availablePushNotifications() & PushNotificationType::Files) {
         if (!_pushNotifications) {
             _pushNotifications = new PushNotifications(this, this);
-            connect(_pushNotifications, &PushNotifications::ready, this, &Account::pushNotificationsReady);
+            connect(_pushNotifications, &PushNotifications::ready, this, [this]() {
+              emit pushNotificationsReady(this); });
         }
         // If push notifications already running it is no problem to call setup again
         _pushNotifications->setup();
@@ -674,6 +676,11 @@ void Account::slotDirectEditingRecieved(const QJsonDocument &json)
             _capabilities.addDirectEditor(directEditor);
         }
     }
+}
+
+PushNotifications *Account::pushNotifications() const
+{
+    return _pushNotifications;
 }
 
 } // namespace OCC

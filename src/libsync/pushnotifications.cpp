@@ -2,6 +2,10 @@
 #include "creds/abstractcredentials.h"
 #include "account.h"
 
+namespace {
+static constexpr int MAX_ALLOWED_FAILED_AUTHENTICATION_ATTEMPTS = 3;
+}
+
 namespace OCC {
 
 Q_LOGGING_CATEGORY(lcPushNotifications, "nextcloud.sync.pushnotifications", QtInfoMsg)
@@ -12,8 +16,15 @@ PushNotifications::PushNotifications(Account *account, QObject *parent)
 {
 }
 
+PushNotifications::~PushNotifications()
+{
+    qCInfo(lcPushNotifications) << "Delete" << this;
+    closeWebSocket();
+}
+
 void PushNotifications::setup()
 {
+    _isReady = false;
     _failedAuthenticationAttemptsCount = 0;
     reconnectToWebSocket();
 }
@@ -68,36 +79,35 @@ void PushNotifications::onWebSocketTextMessageReceived(const QString &message)
     qCInfo(lcPushNotifications) << "Received push notification:" << message;
 
     if (message == "notify_file") {
-        qCInfo(lcPushNotifications) << "Files push notifications arrived";
-        emit filesChanged(_account);
+        handleNotifyFile();
+    } else if (message == "notify_activity") {
+        handleNotification();
+    } else if (message == "notify_notification") {
+        handleNotification();
     } else if (message == "authenticated") {
-        qCInfo(lcPushNotifications) << "Authenticated successful on websocket";
-        _failedAuthenticationAttemptsCount = 0;
-        emit ready();
+        handleAuthenticated();
     } else if (message == "err: Invalid credentials") {
-        qCInfo(lcPushNotifications) << "Invalid credentials submitted to websocket";
-        if (!tryReconnectToWebSocket()) {
-            emit canNotAuthenticate();
-        }
+        handleInvalidCredentials();
     }
 }
 
 void PushNotifications::onWebSocketError(QAbstractSocket::SocketError error)
 {
-    qCWarning(lcPushNotifications) << "Websocket error: " << error;
-
+    qCWarning(lcPushNotifications) << "Websocket error" << error;
+    // How to handle the errors. Should there also be done three reconnect attempts (regardless of the error) in given intervals?
+    _isReady = false;
     emit connectionLost();
 }
 
 bool PushNotifications::tryReconnectToWebSocket()
 {
     ++_failedAuthenticationAttemptsCount;
-    if (_failedAuthenticationAttemptsCount >= _maxAllowedFailedAuthenticationAttempts) {
+    if (_failedAuthenticationAttemptsCount >= MAX_ALLOWED_FAILED_AUTHENTICATION_ATTEMPTS) {
         return false;
     }
 
     if (!_reconnectTimer) {
-        _reconnectTimer = new QTimer;
+        _reconnectTimer = new QTimer(this);
     }
 
     _reconnectTimer->setInterval(_reconnectTimerInterval);
@@ -141,5 +151,40 @@ void PushNotifications::openWebSocket()
 void PushNotifications::setReconnectTimerInterval(uint32_t interval)
 {
     _reconnectTimerInterval = interval;
+}
+
+
+bool PushNotifications::isReady() const
+{
+    return _isReady;
+}
+
+void PushNotifications::handleAuthenticated()
+{
+    qCInfo(lcPushNotifications) << "Authenticated successful on websocket";
+    _failedAuthenticationAttemptsCount = 0;
+    _isReady = true;
+    emit ready();
+}
+
+void PushNotifications::handleNotifyFile()
+{
+    qCInfo(lcPushNotifications) << "Files push notification arrived";
+    emit filesChanged(_account);
+}
+
+void PushNotifications::handleInvalidCredentials()
+{
+    qCInfo(lcPushNotifications) << "Invalid credentials submitted to websocket";
+    if (!tryReconnectToWebSocket()) {
+        _isReady = false;
+        emit authenticationFailed();
+    }
+}
+
+void PushNotifications::handleNotification()
+{
+    qCInfo(lcPushNotifications) << "Notification or activity push notification arrived";
+    emit notification(_account);
 }
 }
