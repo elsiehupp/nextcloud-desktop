@@ -828,6 +828,8 @@ void FolderMan::slotStartScheduledFolderSync()
 
 void FolderMan::slotEtagPollTimerTimeout()
 {
+    qCInfo(lcFolderMan) << "Etag poll timer timeout";
+
     const auto folderMapValues = _folderMap.values();
     QList<Folder *> foldersToRun;
 
@@ -1671,6 +1673,8 @@ void FolderMan::slotSetupPushNotifications(const Folder::Map &folderMap)
 
 void FolderMan::slotProcessFilesPushNotification(Account *account)
 {
+    qCInfo(lcFolderMan) << "Got files push notification run etag job if possible";
+
     for (auto folder : _folderMap) {
         // Just run on the folders that belong to this account
         if (folder->accountState()->account() != account) {
@@ -1686,8 +1690,15 @@ void FolderMan::slotConnectToPushNotifications(Account *account)
     const auto pushNotifications = account->pushNotifications();
 
     if (pushNotifications && pushNotifications->isReady()) {
+        qCInfo(lcFolderMan) << "Push notifications ready";
         connect(pushNotifications, &PushNotifications::filesChanged, this, &FolderMan::slotProcessFilesPushNotification, Qt::UniqueConnection);
     }
 }
+
+// bool pushNotificationsFilesAvailable(Account *account) {
+
+//   const auto capabilityFilesPushNotification =  account->capabilities().availablePushNotifications() & PushNotificationType::Files;
+//   return capabilityFilesPushNotification && pushNotifications && pushNotifications->isReady();
+// }
 
 } // namespace OCC

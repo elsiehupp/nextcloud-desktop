@@ -209,15 +209,20 @@ void Account::setCredentials(AbstractCredentials *cred)
 
 void Account::trySetupPushNotifications()
 {
-    if (_capabilities.availablePushNotifications() & PushNotificationType::Files) {
+    if (_capabilities.availablePushNotifications() != PushNotificationType::None) {
+        qCInfo(lcAccount) << "Try to setup push notifications";
+
         if (!_pushNotifications) {
             _pushNotifications = new PushNotifications(this, this);
+
             connect(_pushNotifications, &PushNotifications::ready, this, [this]() { emit pushNotificationsReady(this); });
+
             connect(_pushNotifications, &PushNotifications::connectionLost, this, [this]() {
                 qCInfo(lcAccount) << "Delete push notifications object because connection lost";
                 _pushNotifications->deleteLater();
                 _pushNotifications = nullptr;
             });
+
             connect(_pushNotifications, &PushNotifications::authenticationFailed, this, [this]() {
                 qCInfo(lcAccount) << "Delete push notifications object because authentication failed";
                 _pushNotifications->deleteLater();
@@ -504,6 +509,8 @@ const Capabilities &Account::capabilities() const
 void Account::setCapabilities(const QVariantMap &caps)
 {
     _capabilities = Capabilities(caps);
+
+    trySetupPushNotifications();
 }
 
 QString Account::serverVersion() const

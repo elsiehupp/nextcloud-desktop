@@ -195,7 +195,8 @@ PushNotificationTypes Capabilities::availablePushNotifications() const
 
 QUrl Capabilities::pushNotificationsWebSocketUrl() const
 {
-    return QUrl(_capabilities["notify_push"].toMap()["endpoints"].toMap()["websocket"].toString());
+    const auto websocket = _capabilities["notify_push"].toMap()["endpoints"].toMap()["websocket"].toString();
+    return QUrl(websocket);
 }
 
 bool Capabilities::chunkingParallelUploadDisabled() const

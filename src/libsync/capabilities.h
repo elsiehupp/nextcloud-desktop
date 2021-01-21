@@ -26,7 +26,7 @@ namespace OCC {
 
 class DirectEditor;
 
-enum class PushNotificationType {
+enum PushNotificationType {
     None = 0,
     Files = 1
 };
