@@ -57,12 +57,9 @@ void PushNotifications::authenticateOnWebSocket()
     const auto username = credentials->user();
     const auto password = credentials->password();
 
-    printf("username: %s\n", username.toStdString().c_str());
-    printf("psw: %s\n", password.toStdString().c_str());
-
     // Authenticate
     _webSocket->sendTextMessage(username);
-    _webSocket->sendTextMessage(password + " ");
+    _webSocket->sendTextMessage(password);
 }
 
 void PushNotifications::onWebSocketDisconnected()
