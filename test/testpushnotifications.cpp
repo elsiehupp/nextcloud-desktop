@@ -18,7 +18,7 @@ private slots:
         QVERIFY(processTextMessageSpy.isValid());
         const QString user = "user";
         const QString password = "password";
-        auto account = createAccount();
+        auto account = FakeWebSocketServer::createAccount();
         auto credentials = new CredentialsStub(user, password);
         account->setCredentials(credentials);
         QSignalSpy readySpy(account->pushNotifications(), &OCC::PushNotifications::ready);
@@ -54,7 +54,7 @@ private slots:
         QSignalSpy processTextMessageSpy(&fakeServer, &FakeWebSocketServer::processTextMessage);
         QVERIFY(processTextMessageSpy.isValid());
 
-        auto account = createAccount();
+        auto account = FakeWebSocketServer::createAccount();
         auto credentials = new CredentialsStub(user, password);
         account->setCredentials(credentials);
         QSignalSpy filesChangedSpy(account->pushNotifications(), &OCC::PushNotifications::filesChanged);
@@ -81,7 +81,7 @@ private slots:
         QSignalSpy processTextMessageSpy(&fakeServer, &FakeWebSocketServer::processTextMessage);
         QVERIFY(processTextMessageSpy.isValid());
 
-        auto account = createAccount();
+        auto account = FakeWebSocketServer::createAccount();
         auto credentials = new CredentialsStub(user, password);
         account->setCredentials(credentials);
         QSignalSpy filesChangedSpy(account->pushNotifications(), &OCC::PushNotifications::notification);
@@ -108,7 +108,7 @@ private slots:
         QSignalSpy processTextMessageSpy(&fakeServer, &FakeWebSocketServer::processTextMessage);
         QVERIFY(processTextMessageSpy.isValid());
 
-        auto account = createAccount();
+        auto account = FakeWebSocketServer::createAccount();
         auto credentials = new CredentialsStub(user, password);
         account->setCredentials(credentials);
         QSignalSpy filesChangedSpy(account->pushNotifications(), &OCC::PushNotifications::notification);
@@ -135,7 +135,7 @@ private slots:
         QSignalSpy processTextMessageSpy(&fakeServer, &FakeWebSocketServer::processTextMessage);
         QVERIFY(processTextMessageSpy.isValid());
 
-        auto account = createAccount();
+        auto account = FakeWebSocketServer::createAccount();
         auto credentials = new CredentialsStub(user, password);
         account->setCredentials(credentials);
         // Need to set reconnect timer interval to zero for tests
@@ -165,7 +165,7 @@ private slots:
         QSignalSpy processTextMessageSpy(&fakeServer, &FakeWebSocketServer::processTextMessage);
         QVERIFY(processTextMessageSpy.isValid());
 
-        auto account = createAccount();
+        auto account = FakeWebSocketServer::createAccount();
         auto credentials = new CredentialsStub(user, password);
         account->setCredentials(credentials);
         // Need to set reconnect timer interval to zero for tests
@@ -180,53 +180,51 @@ private slots:
         auto socket = processTextMessageSpy.at(0).at(0).value<QWebSocket *>();
         socket->abort();
 
-        // Wait for connectionLost signal
-        connectionLostSpy.wait();
-        QCOMPARE(connectionLostSpy.count(), 1);
-        QCOMPARE(account->pushNotifications()->isReady(), false);
+        QVERIFY(connectionLostSpy.wait());
+        // Account handled connectionLost signal and deleted PushNotifications
+        QCOMPARE(account->pushNotifications(), nullptr);
     }
 
-    void testSetup_credentialsThreeTimeRejected_emitAuthenticationFailed()
+    void testSetup_maxConnectionAttemptsReached_deletePushNotifications()
     {
         const QString user = "user";
         const QString password = "password";
         FakeWebSocketServer fakeServer;
         QSignalSpy processTextMessageSpy(&fakeServer, &FakeWebSocketServer::processTextMessage);
         QVERIFY(processTextMessageSpy.isValid());
-        auto account = createAccount();
+
+        auto account = FakeWebSocketServer::createAccount();
         auto credentials = new CredentialsStub(user, password);
         account->setCredentials(credentials);
         account->pushNotifications()->setReconnectTimerInterval(0);
-
         QSignalSpy authenticationFailedSpy(account->pushNotifications(), &OCC::PushNotifications::authenticationFailed);
         QVERIFY(authenticationFailedSpy.isValid());
 
         // Let three authentication attempts fail
-        processTextMessageSpy.wait();
+        QVERIFY(processTextMessageSpy.wait());
         QCOMPARE(processTextMessageSpy.count(), 2);
         auto socket = processTextMessageSpy.at(0).at(0).value<QWebSocket *>();
-
-        processTextMessageSpy.clear();
         socket->sendTextMessage("err: Invalid credentials");
 
-        processTextMessageSpy.wait();
-        QCOMPARE(processTextMessageSpy.count(), 2);
-        socket = processTextMessageSpy.at(0).at(0).value<QWebSocket *>();
-        processTextMessageSpy.clear();
+        QVERIFY(processTextMessageSpy.wait());
+        QCOMPARE(processTextMessageSpy.count(), 4);
+        socket = processTextMessageSpy.at(2).at(0).value<QWebSocket *>();
         socket->sendTextMessage("err: Invalid credentials");
 
-        processTextMessageSpy.wait();
-        QCOMPARE(processTextMessageSpy.count(), 2);
-        socket = processTextMessageSpy.at(0).at(0).value<QWebSocket *>();
+        QVERIFY(processTextMessageSpy.wait());
+        QCOMPARE(processTextMessageSpy.count(), 6);
+        socket = processTextMessageSpy.at(4).at(0).value<QWebSocket *>();
         socket->sendTextMessage("err: Invalid credentials");
 
-        // Now the canNotAuthenticate Signal should be emitted
-        authenticationFailedSpy.wait();
+        // Now the authenticationFailed Signal should be emitted
+        QVERIFY(authenticationFailedSpy.wait());
         QCOMPARE(authenticationFailedSpy.count(), 1);
-        QCOMPARE(account->pushNotifications()->isReady(), false);
+
+        // Account deleted the push notifications
+        QCOMPARE(account->pushNotifications(), nullptr);
     }
 
-    void testSetup_maxConnectionAttemptsReached_canConnectAgain()
+    void testOnWebSocketSslError_sslError_deletePushNotifications()
     {
         const QString user = "user";
         const QString password = "password";
@@ -234,72 +232,46 @@ private slots:
         QSignalSpy processTextMessageSpy(&fakeServer, &FakeWebSocketServer::processTextMessage);
         QVERIFY(processTextMessageSpy.isValid());
 
-        auto account = createAccount();
+        auto account = FakeWebSocketServer::createAccount();
         auto credentials = new CredentialsStub(user, password);
         account->setCredentials(credentials);
-        account->pushNotifications()->setReconnectTimerInterval(0);
-        QSignalSpy canNotAuthenticateSpy(account->pushNotifications(), &OCC::PushNotifications::authenticationFailed);
-        QVERIFY(canNotAuthenticateSpy.isValid());
-
-        // Let three authentication attempts fail
-        processTextMessageSpy.wait();
-        QCOMPARE(processTextMessageSpy.count(), 2);
-        auto socket = processTextMessageSpy.at(0).at(0).value<QWebSocket *>();
-        processTextMessageSpy.clear();
-        socket->sendTextMessage("err: Invalid credentials");
-
-        processTextMessageSpy.wait();
-        QCOMPARE(processTextMessageSpy.count(), 2);
-        socket = processTextMessageSpy.at(0).at(0).value<QWebSocket *>();
-        processTextMessageSpy.clear();
-        socket->sendTextMessage("err: Invalid credentials");
-
-        processTextMessageSpy.wait();
-        QCOMPARE(processTextMessageSpy.count(), 2);
-        socket = processTextMessageSpy.at(0).at(0).value<QWebSocket *>();
-        processTextMessageSpy.clear();
-        socket->sendTextMessage("err: Invalid credentials");
-
-        // Now the canNotAuthenticate Signal should be emitted
-        canNotAuthenticateSpy.wait();
-        QCOMPARE(canNotAuthenticateSpy.count(), 1);
-
-        // Now call setup again and it should do another connection attempt
-        account->pushNotifications()->setup();
-        processTextMessageSpy.wait();
-        QCOMPARE(processTextMessageSpy.count(), 2);
-
-        auto userSent = processTextMessageSpy.at(0).at(1).toString();
-        auto passwordSent = processTextMessageSpy.at(1).at(1).toString();
-        QCOMPARE(userSent, user);
-        QCOMPARE(passwordSent, password);
-    }
-
-    void testOnWebSocketSslError_sslError_emitConnectionLost()
-    {
-        const QString user = "user";
-        const QString password = "password";
-        FakeWebSocketServer fakeServer;
-        QSignalSpy processTextMessageSpy(&fakeServer, &FakeWebSocketServer::processTextMessage);
-        QVERIFY(processTextMessageSpy.isValid());
-
-        auto account = createAccount();
-        auto credentials = new CredentialsStub(user, password);
-        account->setCredentials(credentials);
-
-        QSignalSpy connectionLostSpy(account->pushNotifications(), &OCC::PushNotifications::connectionLost);
-        QVERIFY(connectionLostSpy.isValid());
 
         processTextMessageSpy.wait();
 
         // FIXME: This a little bit ugly but I had no better idea how to trigger a error on the websocket client.
-        // The websocket that is retrived through the server is not connected to the error signal.
-        emit account->pushNotifications()->_webSocket->sslErrors(QList<QSslError>());
+        // The websocket that is retrived through the server is not connected to the ssl error signal.
+        auto pushNotificationsWebSocketChildren = account->pushNotifications()->findChildren<QWebSocket *>();
+        QVERIFY(pushNotificationsWebSocketChildren.size() == 1);
+        emit pushNotificationsWebSocketChildren[0]->sslErrors(QList<QSslError>());
 
-        // Wait for connectionLost signal
-        // FIXME: For some reason it takes a few seconds until this signal arrives. Why does this happen?
-        connectionLostSpy.wait();
-        QCOMPARE(connectionLostSpy.count(), 1);
+        // Account handled connectionLost signal and deleted PushNotifications
+        QCOMPARE(account->pushNotifications(), nullptr);
+    }
+
+    void testAccountSetCredentials_correctCredentials_emitPushNotificationsReady()
+    {
+        FakeWebSocketServer fakeServer;
+        auto account = FakeWebSocketServer::createAccount();
+        QSignalSpy processTextMessageSpy(&fakeServer, &FakeWebSocketServer::processTextMessage);
+        QVERIFY(processTextMessageSpy.isValid());
+        const QString user = "user";
+        const QString password = "password";
+        auto credentials = new CredentialsStub(user, password);
+        account->setCredentials(credentials);
+
+        QSignalSpy pushNotificationsReady(account.data(), &OCC::Account::pushNotificationsReady);
+        QVERIFY(pushNotificationsReady.isValid());
+
+        // Wait for authentication
+        QVERIFY(processTextMessageSpy.wait());
+        auto socket = processTextMessageSpy.at(0).at(0).value<QWebSocket *>();
+        // Don't care about which message was sent
+        socket->sendTextMessage("authenticated");
+
+        // Wait for push notifactions ready signal
+        QVERIFY(pushNotificationsReady.wait());
+        auto accountSent = pushNotificationsReady.at(0).at(0).value<OCC::Account *>();
+        QCOMPARE(accountSent, account.data());
     }
 };
 

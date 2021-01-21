@@ -32,8 +32,7 @@ public:
 
     void close();
 
-    void waitForMessage(
-        std::function<void(QWebSocket *, const QString &)> processMessage, std::function<void()> triggerMessage = []() {});
+    static OCC::AccountPtr createAccount();
 
 signals:
     void closed();
@@ -72,7 +71,3 @@ private:
     QString _user;
     QString _password;
 };
-
-OCC::AccountPtr createAccount();
-
-void setCredentials(OCC::Account *account, const QString &user, const QString &password);

@@ -204,16 +204,25 @@ void Account::setCredentials(AbstractCredentials *cred)
     connect(_credentials.data(), &AbstractCredentials::asked,
         this, &Account::slotCredentialsAsked);
 
-    tryToSetupPushNotifications();
+    trySetupPushNotifications();
 }
 
-void Account::tryToSetupPushNotifications()
+void Account::trySetupPushNotifications()
 {
     if (_capabilities.availablePushNotifications() & PushNotificationType::Files) {
         if (!_pushNotifications) {
             _pushNotifications = new PushNotifications(this, this);
-            connect(_pushNotifications, &PushNotifications::ready, this, [this]() {
-              emit pushNotificationsReady(this); });
+            connect(_pushNotifications, &PushNotifications::ready, this, [this]() { emit pushNotificationsReady(this); });
+            connect(_pushNotifications, &PushNotifications::connectionLost, this, [this]() {
+                qCInfo(lcAccount) << "Delete push notifications object because connection lost";
+                _pushNotifications->deleteLater();
+                _pushNotifications = nullptr;
+            });
+            connect(_pushNotifications, &PushNotifications::authenticationFailed, this, [this]() {
+                qCInfo(lcAccount) << "Delete push notifications object because authentication failed";
+                _pushNotifications->deleteLater();
+                _pushNotifications = nullptr;
+            });
         }
         // If push notifications already running it is no problem to call setup again
         _pushNotifications->setup();

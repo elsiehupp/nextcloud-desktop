@@ -19,8 +19,6 @@
 
 #include "capabilities.h"
 
-class TestPushNotifications;
-
 namespace OCC {
 
 class Account;
@@ -41,13 +39,6 @@ public:
      * This method needs to be called before push notifications can be used.
      */
     void setup();
-
-    /**
-     * Reset push notifications
-     *
-     * After a call to this function the object will be in a state like after a call to setup.
-     */
-    void reset();
 
     /**
      * Set the interval for reconnection attempts
@@ -117,8 +108,6 @@ private:
     QTimer *_reconnectTimer = nullptr;
     uint32_t _reconnectTimerInterval = 20 * 1000;
     bool _isReady = false;
-
-    friend class ::TestPushNotifications;
 };
 
 }

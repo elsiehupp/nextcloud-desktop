@@ -292,7 +292,7 @@ protected Q_SLOTS:
 private:
     Account(QObject *parent = nullptr);
     void setSharedThis(AccountPtr sharedThis);
-    void tryToSetupPushNotifications();
+    void trySetupPushNotifications();
 
     QWeakPointer<Account> _sharedThis;
     QString _id;

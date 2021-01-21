@@ -4,16 +4,16 @@
 
 #include "pushnotificationstestutils.h"
 
-Q_LOGGING_CATEGORY(lcMockWebSocketServer, "nextcloud.test.mockwebserver", QtInfoMsg)
+Q_LOGGING_CATEGORY(lcFakeWebSocketServer, "nextcloud.test.fakewebserver", QtInfoMsg)
 
 FakeWebSocketServer::FakeWebSocketServer(quint16 port, QObject *parent)
     : QObject(parent)
-    , _webSocketServer(new QWebSocketServer(QStringLiteral("Mock Server"), QWebSocketServer::NonSecureMode, this))
+    , _webSocketServer(new QWebSocketServer(QStringLiteral("Fake Server"), QWebSocketServer::NonSecureMode, this))
 {
     if (_webSocketServer->listen(QHostAddress::Any, port)) {
         connect(_webSocketServer, &QWebSocketServer::newConnection, this, &FakeWebSocketServer::onNewConnection);
         connect(_webSocketServer, &QWebSocketServer::closed, this, &FakeWebSocketServer::closed);
-        qCInfo(lcMockWebSocketServer) << "Open mock websocket server on port:" << port;
+        qCInfo(lcFakeWebSocketServer) << "Open fake websocket server on port:" << port;
         return;
     }
     Q_UNREACHABLE();
@@ -24,20 +24,10 @@ FakeWebSocketServer::~FakeWebSocketServer()
     close();
 }
 
-void FakeWebSocketServer::waitForMessage(std::function<void(QWebSocket *, const QString &)> processMessage, std::function<void()> triggerMessage)
-{
-    QSignalSpy spy(this, &FakeWebSocketServer::processTextMessage);
-    triggerMessage();
-    QVERIFY(spy.wait());
-    auto socket = spy.at(0).at(0).value<QWebSocket *>();
-    const auto message = spy.at(0).at(1).toString();
-    processMessage(socket, message);
-}
-
 void FakeWebSocketServer::close()
 {
     if (_webSocketServer->isListening()) {
-        qCInfo(lcMockWebSocketServer) << "Close mock websocket server";
+        qCInfo(lcFakeWebSocketServer) << "Close fake websocket server";
 
         _webSocketServer->close();
         qDeleteAll(_clients.begin(), _clients.end());
@@ -52,7 +42,7 @@ void FakeWebSocketServer::processTextMessageInternal(const QString &message)
 
 void FakeWebSocketServer::onNewConnection()
 {
-    qCInfo(lcMockWebSocketServer) << "New connection on mock websocket server";
+    qCInfo(lcFakeWebSocketServer) << "New connection on fake websocket server";
 
     auto socket = _webSocketServer->nextPendingConnection();
 
@@ -64,7 +54,7 @@ void FakeWebSocketServer::onNewConnection()
 
 void FakeWebSocketServer::socketDisconnected()
 {
-    qCInfo(lcMockWebSocketServer) << "Socket disconnected";
+    qCInfo(lcFakeWebSocketServer) << "Socket disconnected";
 
     auto client = qobject_cast<QWebSocket *>(sender());
 
@@ -72,6 +62,30 @@ void FakeWebSocketServer::socketDisconnected()
         _clients.removeAll(client);
         client->deleteLater();
     }
+}
+
+OCC::AccountPtr FakeWebSocketServer::createAccount()
+{
+    auto account = OCC::Account::create();
+
+    QStringList typeList;
+    typeList.append("files");
+
+    QString websocketUrl("ws://localhost:12345");
+
+    QVariantMap endpointsMap;
+    endpointsMap["websocket"] = websocketUrl;
+
+    QVariantMap notifyPushMap;
+    notifyPushMap["type"] = typeList;
+    notifyPushMap["endpoints"] = endpointsMap;
+
+    QVariantMap capabilitiesMap;
+    capabilitiesMap["notify_push"] = notifyPushMap;
+
+    account->setCapabilities(capabilitiesMap);
+
+    return account;
 }
 
 CredentialsStub::CredentialsStub(const QString &user, const QString &password)
@@ -119,33 +133,3 @@ void CredentialsStub::persist() { }
 void CredentialsStub::invalidateToken() { }
 
 void CredentialsStub::forgetSensitiveData() { }
-
-OCC::AccountPtr createAccount()
-{
-    auto account = OCC::Account::create();
-
-    QStringList typeList;
-    typeList.append("files");
-
-    QString websocketUrl("ws://localhost:12345");
-
-    QVariantMap endpointsMap;
-    endpointsMap["websocket"] = websocketUrl;
-
-    QVariantMap notifyPushMap;
-    notifyPushMap["type"] = typeList;
-    notifyPushMap["endpoints"] = endpointsMap;
-
-    QVariantMap capabilitiesMap;
-    capabilitiesMap["notify_push"] = notifyPushMap;
-
-    account->setCapabilities(capabilitiesMap);
-
-    return account;
-}
-
-void setCredentials(OCC::Account *account, const QString &user, const QString &password)
-{
-    auto credentials = new CredentialsStub(user, password);
-    account->setCredentials(credentials);
-}

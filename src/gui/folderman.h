@@ -290,9 +290,7 @@ private slots:
 
     void slotSetupPushNotifications(const Folder::Map &);
     void slotProcessFilesPushNotification(Account *account);
-    void slotPushNotificationsAuthenticationFailed();
-    void slotPushNotificationsConnectionLost();
-    void slotPushNotificationsReady(Account *account);
+    void slotConnectToPushNotifications(Account *account);
 
 private:
     /** Adds a new folder, does not add it to the account settings and
@@ -321,8 +319,6 @@ private:
 
     void runEtagJobsIfPossible(const QList<Folder *> &folderMap);
     void runEtagJobIfPossible(Folder *folder);
-
-    void tryToConnectToPushNotificationsForFiles(Account *account);
 
 
     QSet<Folder *> _disabledFolders;

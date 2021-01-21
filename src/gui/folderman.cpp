@@ -79,8 +79,6 @@ FolderMan::FolderMan(QObject *parent)
     connect(_lockWatcher.data(), &LockWatcher::fileUnlocked,
         this, &FolderMan::slotWatchedFileUnlocked);
 
-    // Question: It's unnecessary to reconnect to push notifications everytime the folder list changed.
-    // It would be better to connect when the account gets added. Is there any way to get notified about that?
     connect(this, &FolderMan::folderListChanged, this, &FolderMan::slotSetupPushNotifications);
 }
 
@@ -834,12 +832,12 @@ void FolderMan::slotEtagPollTimerTimeout()
     QList<Folder *> foldersToRun;
 
     // Some folders need not to be checked because they use the push notifications
-    std::copy_if(folderMapValues.begin(), folderMapValues.end(), foldersToRun.begin(), [&](Folder *folder) {
+    std::copy_if(folderMapValues.begin(), folderMapValues.end(), foldersToRun.begin(), [this](Folder *folder) {
         const auto account = folder->accountState()->account();
-        const auto &capabilities = account->capabilities();
+        const auto capabilities = account->capabilities();
         const auto pushNotifications = account->pushNotifications();
 
-        return !(pushNotifications && pushNotifications->isReady());
+        return (!pushNotifications || !pushNotifications->isReady());
     });
 
     runEtagJobsIfPossible(foldersToRun);
@@ -1666,8 +1664,8 @@ void FolderMan::slotSetupPushNotifications(const Folder::Map &folderMap)
         // See if the account already provides the PushNotifications object and if yes connect to it.
         // If we can't connect at this point, the signals will be connected in slotPushNotificationsReady()
         // after the PushNotification object emitted the ready signal
-        tryToConnectToPushNotificationsForFiles(account.data());
-        connect(account.data(), &Account::pushNotificationsReady, this, &FolderMan::slotPushNotificationsReady, Qt::UniqueConnection);
+        slotConnectToPushNotifications(account.data());
+        connect(account.data(), &Account::pushNotificationsReady, this, &FolderMan::slotConnectToPushNotifications, Qt::UniqueConnection);
     }
 }
 
@@ -1683,28 +1681,13 @@ void FolderMan::slotProcessFilesPushNotification(Account *account)
     }
 }
 
-void FolderMan::slotPushNotificationsReady(Account *account)
-{
-    tryToConnectToPushNotificationsForFiles(account);
-}
-
-void FolderMan::tryToConnectToPushNotificationsForFiles(Account *account)
+void FolderMan::slotConnectToPushNotifications(Account *account)
 {
     const auto pushNotifications = account->pushNotifications();
 
     if (pushNotifications && pushNotifications->isReady()) {
         connect(pushNotifications, &PushNotifications::filesChanged, this, &FolderMan::slotProcessFilesPushNotification, Qt::UniqueConnection);
-        // Question: Need we handle authenticationFailed here? Because PushNotifications tries three times to reauthenticate in 20 seconds
-        // intervals and gives up then.
-        // FolderMan needs not to be informed if PushNotifications not available anymore because FolderMan checks anyway all 30 seconds the
-        // PushNotifications::isReady() method.
-        connect(pushNotifications, &PushNotifications::connectionLost, this, &FolderMan::slotPushNotificationsConnectionLost, Qt::UniqueConnection);
-        connect(pushNotifications, &PushNotifications::authenticationFailed, this, &FolderMan::slotPushNotificationsAuthenticationFailed, Qt::UniqueConnection);
     }
 }
-
-void FolderMan::slotPushNotificationsConnectionLost() { }
-
-void FolderMan::slotPushNotificationsAuthenticationFailed() { }
 
 } // namespace OCC
