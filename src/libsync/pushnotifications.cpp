@@ -84,14 +84,14 @@ void PushNotifications::onWebSocketTextMessageReceived(const QString &message)
 
 void PushNotifications::onWebSocketError(QAbstractSocket::SocketError error)
 {
-    qCWarning(lcPushNotifications) << "Websocket error" << error;
-
     // This error gets thrown in testSetup_maxConnectionAttemptsReached_deletePushNotifications after
     // the second connection attempt. I have no idea why this happens. Maybe the socket gets not closed correctly?
     // I think it's fine to ignore this error.
     if (error == QAbstractSocket::UnfinishedSocketOperationError) {
         return;
     }
+
+    qCWarning(lcPushNotifications) << "Websocket error" << error;
 
     _isReady = false;
     emit connectionLost();

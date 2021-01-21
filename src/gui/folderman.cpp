@@ -826,21 +826,34 @@ void FolderMan::slotStartScheduledFolderSync()
     }
 }
 
+bool FolderMan::pushNotificationsFilesReady(Account *account)
+{
+    const auto pushNotifications = account->pushNotifications();
+    const auto pushFilesAvailable = account->capabilities().availablePushNotifications() & PushNotificationType::Files;
+
+    return pushFilesAvailable && pushNotifications && pushNotifications->isReady();
+}
+
 void FolderMan::slotEtagPollTimerTimeout()
 {
     qCInfo(lcFolderMan) << "Etag poll timer timeout";
 
     const auto folderMapValues = _folderMap.values();
+
+    qCInfo(lcFolderMan) << "Folders to sync:" << folderMapValues.size();
+
     QList<Folder *> foldersToRun;
 
     // Some folders need not to be checked because they use the push notifications
-    std::copy_if(folderMapValues.begin(), folderMapValues.end(), foldersToRun.begin(), [this](Folder *folder) {
+    std::copy_if(folderMapValues.begin(), folderMapValues.end(), std::back_inserter(foldersToRun), [this](Folder *folder) -> bool {
         const auto account = folder->accountState()->account();
         const auto capabilities = account->capabilities();
         const auto pushNotifications = account->pushNotifications();
 
-        return (!pushNotifications || !pushNotifications->isReady());
+        return !pushNotificationsFilesReady(account.data());
     });
+
+    qCInfo(lcFolderMan) << "Number of folders that don't use push notifications:" << foldersToRun.size();
 
     runEtagJobsIfPossible(foldersToRun);
 }
@@ -857,24 +870,35 @@ void FolderMan::runEtagJobIfPossible(Folder *folder)
     const ConfigFile cfg;
     const auto polltime = cfg.remotePollInterval();
 
+    qCInfo(lcFolderMan) << "Run etag job on folder" << folder;
+
     if (!folder) {
         return;
     }
     if (folder->isSyncRunning()) {
+        qCInfo(lcFolderMan) << "Can not run etag job: Sync is running";
         return;
     }
     if (_scheduledFolders.contains(folder)) {
+        qCInfo(lcFolderMan) << "Can not run etag job: Folder is alreday scheduled";
         return;
     }
     if (_disabledFolders.contains(folder)) {
+        qCInfo(lcFolderMan) << "Can not run etag job: Folder is disabled";
         return;
     }
     if (folder->etagJob() || folder->isBusy() || !folder->canSync()) {
+        qCInfo(lcFolderMan) << "Can not run etag job: Folder is busy";
         return;
     }
-    if (folder->msecSinceLastSync() < polltime) {
-        return;
+    // When not using push notifications, make sure polltime is reached
+    if (!pushNotificationsFilesReady(folder->accountState()->account().data())) {
+        if (folder->msecSinceLastSync() < polltime) {
+            qCInfo(lcFolderMan) << "Can not run etag job: Polltime not reached";
+            return;
+        }
     }
+
     QMetaObject::invokeMethod(folder, "slotRunEtagJob", Qt::QueuedConnection);
 }
 
@@ -1681,6 +1705,7 @@ void FolderMan::slotProcessFilesPushNotification(Account *account)
             continue;
         }
 
+        qCInfo(lcFolderMan) << "Run etag job if possible on " << folder;
         runEtagJobIfPossible(folder);
     }
 }
@@ -1689,16 +1714,11 @@ void FolderMan::slotConnectToPushNotifications(Account *account)
 {
     const auto pushNotifications = account->pushNotifications();
 
-    if (pushNotifications && pushNotifications->isReady()) {
+    if (pushNotificationsFilesReady(account)) {
         qCInfo(lcFolderMan) << "Push notifications ready";
         connect(pushNotifications, &PushNotifications::filesChanged, this, &FolderMan::slotProcessFilesPushNotification, Qt::UniqueConnection);
     }
 }
 
-// bool pushNotificationsFilesAvailable(Account *account) {
-
-//   const auto capabilityFilesPushNotification =  account->capabilities().availablePushNotifications() & PushNotificationType::Files;
-//   return capabilityFilesPushNotification && pushNotifications && pushNotifications->isReady();
-// }
 
 } // namespace OCC

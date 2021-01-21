@@ -320,6 +320,8 @@ private:
     void runEtagJobsIfPossible(const QList<Folder *> &folderMap);
     void runEtagJobIfPossible(Folder *folder);
 
+    bool pushNotificationsFilesReady(Account *account);
+
 
     QSet<Folder *> _disabledFolders;
     Folder::Map _folderMap;

@@ -217,17 +217,14 @@ void Account::trySetupPushNotifications()
 
             connect(_pushNotifications, &PushNotifications::ready, this, [this]() { emit pushNotificationsReady(this); });
 
-            connect(_pushNotifications, &PushNotifications::connectionLost, this, [this]() {
-                qCInfo(lcAccount) << "Delete push notifications object because connection lost";
+            const auto deletePushNotifications = [this]() {
+                qCInfo(lcAccount) << "Delete push notifications object because authentication failed or connection lost";
                 _pushNotifications->deleteLater();
                 _pushNotifications = nullptr;
-            });
+            };
 
-            connect(_pushNotifications, &PushNotifications::authenticationFailed, this, [this]() {
-                qCInfo(lcAccount) << "Delete push notifications object because authentication failed";
-                _pushNotifications->deleteLater();
-                _pushNotifications = nullptr;
-            });
+            connect(_pushNotifications, &PushNotifications::connectionLost, this, deletePushNotifications);
+            connect(_pushNotifications, &PushNotifications::authenticationFailed, this, deletePushNotifications);
         }
         // If push notifications already running it is no problem to call setup again
         _pushNotifications->setup();
