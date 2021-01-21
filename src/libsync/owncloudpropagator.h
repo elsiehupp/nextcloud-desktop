@@ -186,6 +186,9 @@ public:
         , _item(item)
         , _parallelism(FullParallelism)
     {
+        // we should always execute jobs that process the E2EE API calls as sequential jobs
+        // TODO: In fact, we must make sure Lock/Unlock are not colliding and always work for each other to complete. So, we could refactor this "_parallelism" later
+        // so every "PropagateItemJob" that will potentially execute Lock job on E2EE folder will get executed sequentially
         _parallelism = (_item->_isEncrypted || hasEncryptedAncestor()) ? WaitForFinished : FullParallelism;
     }
     ~PropagateItemJob();
