@@ -938,8 +938,8 @@ void ProcessDirectoryJob::processFileAnalyzeLocalInfo(
     // If it's not a move it's just a local-NEW
     if (!moveCheck()) {
         if (base._isE2eEncrypted) {
-            // if we're renaming the root encrypted folder, we'd need to mark it's NEW item with _isEncrypted true so the further processing will work correctly
-            // NOTE: could as well just do item->_isEncrypted = base._isE2eEncrypted; without if, but, don't want to accidentally unset flag, we just need it set to true, not changed assign base._isE2eEncrypted to it
+            // renaming the encrypted folder is done via remove + re-upload hence we need to mark the newly created folder as encrypted
+            // base is a record in the SyncJournal database that contains the data about the being-renamed folder with it's old name and encryption information
             item->_isEncrypted = true;
         }
         postProcessLocalNew();

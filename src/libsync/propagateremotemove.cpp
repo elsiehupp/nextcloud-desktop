@@ -91,6 +91,7 @@ void PropagateRemoteMove::start()
             // encrypted name is displayed instead of a local folder name, unless the sync folder is removed, then added again and re-synced
             // we are fixing it by modifying the "_encryptedFileName" in such a way so it will have a renamed root path at the beginning of it as expected
             // corrected "_encryptedFileName" is later used in propagator()->updateMetadata() call that will update the record in the Sync journal DB
+
             const auto path = _item->_file;
             const auto slashPosition = path.lastIndexOf('/');
             const auto parentPath = slashPosition >= 0 ? path.left(slashPosition) : QString();
@@ -102,11 +103,10 @@ void PropagateRemoteMove::start()
                 return;
             }
 
-            // We should be encrypted as well since our parent is
             const auto remoteParentPath = parentRec._e2eMangledName.isEmpty() ? parentPath : parentRec._e2eMangledName;
 
             const auto lastSlashPosition = _item->_encryptedFileName.lastIndexOf('/');
-            const auto encryptedName = slashPosition >= 0 ? _item->_encryptedFileName.mid(lastSlashPosition + 1) : QString();
+            const auto encryptedName = lastSlashPosition >= 0 ? _item->_encryptedFileName.mid(lastSlashPosition + 1) : QString();
 
             if (!encryptedName.isEmpty()) {
                 _item->_encryptedFileName = remoteParentPath + "/" + encryptedName;
