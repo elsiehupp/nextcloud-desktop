@@ -46,6 +46,7 @@ Q_LOGGING_CATEGORY(lcNetworkJob, "nextcloud.sync.networkjob", QtInfoMsg)
 
 // If not set, it is overwritten by the Application constructor with the value from the config
 int AbstractNetworkJob::httpTimeout = qEnvironmentVariableIntValue("OWNCLOUD_TIMEOUT");
+bool AbstractNetworkJob::enableTimeout = false;
 
 AbstractNetworkJob::AbstractNetworkJob(const AccountPtr &account, const QString &path, QObject *parent)
     : QObject(parent)
@@ -116,6 +117,7 @@ void AbstractNetworkJob::setupConnections(QNetworkReply *reply)
     connect(reply, &QNetworkReply::metaDataChanged, this, &AbstractNetworkJob::networkActivity);
     connect(reply, &QNetworkReply::downloadProgress, this, &AbstractNetworkJob::networkActivity);
     connect(reply, &QNetworkReply::uploadProgress, this, &AbstractNetworkJob::networkActivity);
+    connect(reply, &QNetworkReply::redirected, this, [reply, this] (const QUrl &url) { emit redirected(reply, url, 0);});
 }
 
 QNetworkReply *AbstractNetworkJob::addTimer(QNetworkReply *reply)
@@ -299,7 +301,6 @@ void AbstractNetworkJob::slotFinished()
 
 QByteArray AbstractNetworkJob::responseTimestamp()
 {
-    ASSERT(!_responseTimestamp.isEmpty());
     return _responseTimestamp;
 }
 
@@ -365,6 +366,11 @@ void AbstractNetworkJob::start()
 
 void AbstractNetworkJob::slotTimeout()
 {
+    // TODO: workaround, find cause of https://github.com/nextcloud/desktop/issues/7184
+    if (!AbstractNetworkJob::enableTimeout) {
+        return;
+    }
+
     _timedout = true;
     qCWarning(lcNetworkJob) << "Network job timeout" << (reply() ? reply()->request().url() : path());
     onTimedOut();
@@ -408,7 +414,7 @@ QString extractErrorMessage(const QByteArray &errorResponse)
 {
     QXmlStreamReader reader(errorResponse);
     reader.readNextStartElement();
-    if (reader.name() != "error") {
+    if (reader.name() != QStringLiteral("error")) {
         return QString();
     }
 
