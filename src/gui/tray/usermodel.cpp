@@ -73,7 +73,7 @@ User::User(AccountStatePtr &account, const bool &isCurrent, QObject *parent)
         this, &User::slotCheckExpiredActivities);
 
     connect(_account.data(), &AccountState::stateChanged,
-            [=]() { if (isConnected()) {slotRefreshImmediately();} });
+            [=, this]() { if (isConnected()) {slotRefreshImmediately();} });
     connect(_account.data(), &AccountState::stateChanged, this, &User::accountStateChanged);
     connect(_account.data(), &AccountState::hasFetchedNavigationApps,
         this, &User::slotRebuildNavigationAppList);
@@ -1349,8 +1349,9 @@ void UserModel::addUser(AccountStatePtr &user, const bool &isCurrent)
         });
 
         connect(u, &User::statusChanged, this, [this, row] {
-            emit dataChanged(index(row, 0), index(row, 0), {UserModel::StatusIconRole, 
-			    				    UserModel::StatusEmojiRole,     
+            emit dataChanged(index(row, 0), index(row, 0), {UserModel::StatusRole,
+                                                            UserModel::StatusIconRole,
+                                                            UserModel::StatusEmojiRole,
                                                             UserModel::StatusMessageRole});
         });
         
@@ -1542,6 +1543,8 @@ QVariant UserModel::data(const QModelIndex &index, int role) const
         return _users[index.row()]->server();
     } else if (role == ServerHasUserStatusRole) {
         return _users[index.row()]->serverHasUserStatus();
+    } else if (role == StatusRole) {
+        return QVariant::fromValue(_users[index.row()]->status());
     } else if (role == StatusIconRole) {
         return _users[index.row()]->statusIcon();
     } else if (role == StatusEmojiRole) {
@@ -1568,6 +1571,7 @@ QHash<int, QByteArray> UserModel::roleNames() const
     roles[NameRole] = "name";
     roles[ServerRole] = "server";
     roles[ServerHasUserStatusRole] = "serverHasUserStatus";
+    roles[StatusRole] = "status";
     roles[StatusIconRole] = "statusIcon";
     roles[StatusEmojiRole] = "statusEmoji";
     roles[StatusMessageRole] = "statusMessage";
