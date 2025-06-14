@@ -3107,6 +3107,11 @@ Non é posíbel reverter as versións inmediatamente: cambiar de estábel a empr
         <source>Debug archive is created at %1</source>
         <translation>O arquivo de depuración creouse en %1</translation>
     </message>
+    <message>
+        <location filename="../src/gui/generalsettings.cpp" line="637"/>
+        <source>Redact information deemed sensitive before sharing! Debug archive created at %1</source>
+        <translation type="unfinished"/>
+    </message>
 </context>
 <context>
     <name>OCC::GetOrCreatePublicLinkShare</name>
@@ -4282,12 +4287,12 @@ Este é un novo modo experimental. Se decide usalo, agradecémoslle que informe 
         <translation>Non é posíbel sincronizar por mor dunha hora de modificación incorrecta</translation>
     </message>
     <message>
-        <location filename="../src/libsync/discovery.cpp" line="1187"/>
+        <location filename="../src/libsync/discovery.cpp" line="1185"/>
         <source>Upload of %1 exceeds %2 of space left in personal files.</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../src/libsync/discovery.cpp" line="1190"/>
+        <location filename="../src/libsync/discovery.cpp" line="1188"/>
         <source>Upload of %1 exceeds %2 of space left in folder %3.</source>
         <translation type="unfinished"/>
     </message>

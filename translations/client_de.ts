@@ -3107,6 +3107,11 @@ Ein Downgrade von Versionen ist nicht sofort möglich: Der Wechsel von Beta auf 
         <source>Debug archive is created at %1</source>
         <translation>Debug-Archiv erstellt in %1</translation>
     </message>
+    <message>
+        <location filename="../src/gui/generalsettings.cpp" line="637"/>
+        <source>Redact information deemed sensitive before sharing! Debug archive created at %1</source>
+        <translation>Informationen, die als vertraulich gelten, vor der Weitergabe redigieren! Debug-Archiv erstellt unter %1</translation>
+    </message>
 </context>
 <context>
     <name>OCC::GetOrCreatePublicLinkShare</name>
@@ -4282,12 +4287,12 @@ Dies ist ein neuer, experimenteller Modus. Wenn Sie sich entscheiden, ihn zu ver
         <translation>Synchronisierung wegen ungültiger Änderungszeit nicht möglich</translation>
     </message>
     <message>
-        <location filename="../src/libsync/discovery.cpp" line="1187"/>
+        <location filename="../src/libsync/discovery.cpp" line="1185"/>
         <source>Upload of %1 exceeds %2 of space left in personal files.</source>
         <translation>Hochladen von %1 übersteigt %2 des in den persönlichen Dateien verfügbaren Speicherplatzes.</translation>
     </message>
     <message>
-        <location filename="../src/libsync/discovery.cpp" line="1190"/>
+        <location filename="../src/libsync/discovery.cpp" line="1188"/>
         <source>Upload of %1 exceeds %2 of space left in folder %3.</source>
         <translation>Hochladen von %1 übersteigt %2 des in dem Ordner %3 verfügbaren Speicherplatzes.</translation>
     </message>

@@ -3106,6 +3106,11 @@ Downgrading versions is not possible immediately: changing from stable to enterp
         <source>Debug archive is created at %1</source>
         <translation>调试存档已创建于 %1</translation>
     </message>
+    <message>
+        <location filename="../src/gui/generalsettings.cpp" line="637"/>
+        <source>Redact information deemed sensitive before sharing! Debug archive created at %1</source>
+        <translation>分享前请移除敏感信息！调试存档创建于 %1</translation>
+    </message>
 </context>
 <context>
     <name>OCC::GetOrCreatePublicLinkShare</name>
@@ -4273,12 +4278,12 @@ This is a new, experimental mode. If you decide to use it, please report any iss
         <translation>由于修改时间无效，因此无法同步</translation>
     </message>
     <message>
-        <location filename="../src/libsync/discovery.cpp" line="1187"/>
+        <location filename="../src/libsync/discovery.cpp" line="1185"/>
         <source>Upload of %1 exceeds %2 of space left in personal files.</source>
         <translation>%1 的上传超过了个人文件中剩余空间的 %2。</translation>
     </message>
     <message>
-        <location filename="../src/libsync/discovery.cpp" line="1190"/>
+        <location filename="../src/libsync/discovery.cpp" line="1188"/>
         <source>Upload of %1 exceeds %2 of space left in folder %3.</source>
         <translation>%1 的上传超过了文件夹 %3 中剩余空间的 %2。</translation>
     </message>

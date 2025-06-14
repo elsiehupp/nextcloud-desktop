@@ -3104,6 +3104,11 @@ Downgrading versions is not possible immediately: changing from stable to enterp
         <source>Debug archive is created at %1</source>
         <translation>디버그 아카이브가 %1에 생성됨</translation>
     </message>
+    <message>
+        <location filename="../src/gui/generalsettings.cpp" line="637"/>
+        <source>Redact information deemed sensitive before sharing! Debug archive created at %1</source>
+        <translation type="unfinished"/>
+    </message>
 </context>
 <context>
     <name>OCC::GetOrCreatePublicLinkShare</name>
@@ -4280,12 +4285,12 @@ This is a new, experimental mode. If you decide to use it, please report any iss
         <translation>유효하지 않은 수정 시간으로 인해 동기화할 수 없습니다.</translation>
     </message>
     <message>
-        <location filename="../src/libsync/discovery.cpp" line="1187"/>
+        <location filename="../src/libsync/discovery.cpp" line="1185"/>
         <source>Upload of %1 exceeds %2 of space left in personal files.</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../src/libsync/discovery.cpp" line="1190"/>
+        <location filename="../src/libsync/discovery.cpp" line="1188"/>
         <source>Upload of %1 exceeds %2 of space left in folder %3.</source>
         <translation type="unfinished"/>
     </message>

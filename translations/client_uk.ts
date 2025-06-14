@@ -3106,6 +3106,11 @@ Downgrading versions is not possible immediately: changing from stable to enterp
         <source>Debug archive is created at %1</source>
         <translation>Архів зневадження створено у %1</translation>
     </message>
+    <message>
+        <location filename="../src/gui/generalsettings.cpp" line="637"/>
+        <source>Redact information deemed sensitive before sharing! Debug archive created at %1</source>
+        <translation>Видаліть інформацію, яка вважається конфіденційною, перш ніж надати її у спільний доступ! Архів зневадження створено у %1</translation>
+    </message>
 </context>
 <context>
     <name>OCC::GetOrCreatePublicLinkShare</name>
@@ -4281,12 +4286,12 @@ This is a new, experimental mode. If you decide to use it, please report any iss
         <translation>Неможливо виконати синхронізацію через неправильний час модифікації</translation>
     </message>
     <message>
-        <location filename="../src/libsync/discovery.cpp" line="1187"/>
+        <location filename="../src/libsync/discovery.cpp" line="1185"/>
         <source>Upload of %1 exceeds %2 of space left in personal files.</source>
         <translation>Завантаження %1 перевищує %2 доступного для вас місця.</translation>
     </message>
     <message>
-        <location filename="../src/libsync/discovery.cpp" line="1190"/>
+        <location filename="../src/libsync/discovery.cpp" line="1188"/>
         <source>Upload of %1 exceeds %2 of space left in folder %3.</source>
         <translation>Завантаження %1 перевищує %2 доступного для вам місця для каталогу %3.</translation>
     </message>

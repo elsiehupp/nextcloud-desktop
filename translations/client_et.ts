@@ -3108,6 +3108,11 @@ Kui võtad selle kasutusele, siis eelmise versiooni juurde ei ole võimalik otse
         <source>Debug archive is created at %1</source>
         <translation>Arhiivifail veaotsingu jaoks on loodud asukohta %1</translation>
     </message>
+    <message>
+        <location filename="../src/gui/generalsettings.cpp" line="637"/>
+        <source>Redact information deemed sensitive before sharing! Debug archive created at %1</source>
+        <translation>Enne jagamist eemalda privaatne ja delikaatne teave! Arhiiv on olemas siin: %1</translation>
+    </message>
 </context>
 <context>
     <name>OCC::GetOrCreatePublicLinkShare</name>
@@ -4283,12 +4288,12 @@ Tegemist on uue ja katseise võimalusega. Kui otsustad seda kasutada, siis palun
         <translation>Vigase muutmisaja tõttu ei õnnestunud sünkroniseerida</translation>
     </message>
     <message>
-        <location filename="../src/libsync/discovery.cpp" line="1187"/>
+        <location filename="../src/libsync/discovery.cpp" line="1185"/>
         <source>Upload of %1 exceeds %2 of space left in personal files.</source>
         <translation>„%1“ üleslaadimine on suurem, kui isiklike failide „%2“ vaba ruum.</translation>
     </message>
     <message>
-        <location filename="../src/libsync/discovery.cpp" line="1190"/>
+        <location filename="../src/libsync/discovery.cpp" line="1188"/>
         <source>Upload of %1 exceeds %2 of space left in folder %3.</source>
         <translation>„%1“ üleslaadimine on suurem, kui „%3“ kausta „%2“ vaba ruum.</translation>
     </message>
@@ -6228,7 +6233,7 @@ Veateade serveri päringuvastuses: %2</translation>
     <message>
         <location filename="../src/common/utility.cpp" line="455"/>
         <source>now</source>
-        <translation>kohe</translation>
+        <translation>äsja</translation>
     </message>
     <message>
         <location filename="../src/common/utility.cpp" line="464"/>

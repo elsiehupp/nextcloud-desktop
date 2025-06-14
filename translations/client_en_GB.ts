@@ -3109,6 +3109,11 @@ Downgrading versions is not possible immediately: changing from stable to enterp
         <source>Debug archive is created at %1</source>
         <translation>Debug archive is created at %1</translation>
     </message>
+    <message>
+        <location filename="../src/gui/generalsettings.cpp" line="637"/>
+        <source>Redact information deemed sensitive before sharing! Debug archive created at %1</source>
+        <translation>Redact information deemed sensitive before sharing! Debug archive created at %1</translation>
+    </message>
 </context>
 <context>
     <name>OCC::GetOrCreatePublicLinkShare</name>
@@ -4284,12 +4289,12 @@ This is a new, experimental mode. If you decide to use it, please report any iss
         <translation>Cannot sync due to invalid modification time</translation>
     </message>
     <message>
-        <location filename="../src/libsync/discovery.cpp" line="1187"/>
+        <location filename="../src/libsync/discovery.cpp" line="1185"/>
         <source>Upload of %1 exceeds %2 of space left in personal files.</source>
         <translation>Upload of %1 exceeds %2 of space left in personal files.</translation>
     </message>
     <message>
-        <location filename="../src/libsync/discovery.cpp" line="1190"/>
+        <location filename="../src/libsync/discovery.cpp" line="1188"/>
         <source>Upload of %1 exceeds %2 of space left in folder %3.</source>
         <translation>Upload of %1 exceeds %2 of space left in folder %3.</translation>
     </message>

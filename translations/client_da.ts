@@ -557,7 +557,7 @@ Skal kontoen importeres?</translation>
     <message>
         <location filename="../src/gui/accountmanager.cpp" line="237"/>
         <source>Import</source>
-        <translation>Importer</translation>
+        <translation>Importér</translation>
     </message>
     <message>
         <location filename="../src/gui/accountmanager.cpp" line="238"/>
@@ -3108,6 +3108,11 @@ Nedgradering versioner er ikke muligt med det samme: skifte fra stabil til virks
         <source>Debug archive is created at %1</source>
         <translation>Fejlarkivet oprettedes den %1</translation>
     </message>
+    <message>
+        <location filename="../src/gui/generalsettings.cpp" line="637"/>
+        <source>Redact information deemed sensitive before sharing! Debug archive created at %1</source>
+        <translation type="unfinished"/>
+    </message>
 </context>
 <context>
     <name>OCC::GetOrCreatePublicLinkShare</name>
@@ -4283,12 +4288,12 @@ Dette er en ny, eksperimentel tilstand. Hvis du beslutter at bruge det, bedes du
         <translation>Kan ikke synkronisere på grund af ugyldig ændringstid</translation>
     </message>
     <message>
-        <location filename="../src/libsync/discovery.cpp" line="1187"/>
+        <location filename="../src/libsync/discovery.cpp" line="1185"/>
         <source>Upload of %1 exceeds %2 of space left in personal files.</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../src/libsync/discovery.cpp" line="1190"/>
+        <location filename="../src/libsync/discovery.cpp" line="1188"/>
         <source>Upload of %1 exceeds %2 of space left in folder %3.</source>
         <translation type="unfinished"/>
     </message>
